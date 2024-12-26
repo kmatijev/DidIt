@@ -14,9 +14,14 @@ class TodoViewModel : ViewModel() {
 
     val todoList : LiveData<List<Todo>> = todoDao.getAllTodo()
 
-    fun addTodo(title: String){
+    fun addTodo(title: String, reminderDate: Long?){
         viewModelScope.launch(Dispatchers.IO) {
-            todoDao.addTodo(Todo(title = title, createdAt = Date.from(Instant.now())))
+            todoDao.addTodo(Todo(
+                title = title,
+                createdAt = Date.from(Instant.now()),
+                reminderDate = reminderDate, // Pass the reminder date
+                isChecked = false // Set the initial state of the checkbox to unchecked
+            ))
         }
     }
 

@@ -15,6 +15,8 @@ class MainApplication : Application() {
                 applicationContext,
                 TodoDatabase::class.java,
                 TodoDatabase.NAME
-            ).build()
+            )
+                .fallbackToDestructiveMigration() // Remove after table is DONE
+                .build()
     }
 }

@@ -131,7 +131,7 @@ fun TodoListPage(viewModel: TodoViewModel) {
             showDialog = showDialog,
             onDismiss = { showDialog = false },
             onAddTask = { title, reminder ->
-                viewModel.addTodo(title)
+                viewModel.addTodo(title, reminderDate)
                 inputText = "" // Clear the input text
                 reminderDate = null // Reset reminder date
                 showDialog = false // Close the dialog
