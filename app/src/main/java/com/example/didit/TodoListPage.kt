@@ -2,6 +2,7 @@ package com.example.didit
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +82,10 @@ fun AppTopBar(
 @Composable
 fun TodoListPage(viewModel: TodoViewModel) {
     val todoList by viewModel.todoList.observeAsState()
+
+    // Debug log to check if the list and reminder date are correct
+    Log.d("TodoList", "Todo List: $todoList")
+
     var showDialog by remember { mutableStateOf(false) }
     var inputText by remember { mutableStateOf("") }
     var reminderDate by remember { mutableStateOf<Long?>(null)}
@@ -110,9 +116,15 @@ fun TodoListPage(viewModel: TodoViewModel) {
                     LazyColumn(
                         content = {
                             itemsIndexed(todoList!!) { _: Int, item: Todo ->
-                                TodoItem(item, onDelete = {
-                                    viewModel.deleteTodo(item.id)
-                                })
+                                TodoItem(
+                                    item = item,
+                                    onDelete = {
+                                        viewModel.deleteTodo(item.id)
+                                    },
+                                    onCheckedChange = { checked ->
+                                        viewModel.toggleTaskChecked(item.copy(isChecked = checked))
+                                    }
+                                )
                             }
                         }
                     )
@@ -131,7 +143,7 @@ fun TodoListPage(viewModel: TodoViewModel) {
             showDialog = showDialog,
             onDismiss = { showDialog = false },
             onAddTask = { title, reminder ->
-                viewModel.addTodo(title, reminderDate)
+                viewModel.addTodo(title, reminder)
                 inputText = "" // Clear the input text
                 reminderDate = null // Reset reminder date
                 showDialog = false // Close the dialog
@@ -189,10 +201,9 @@ fun TaskCreationDialog(
         )
     }
 }
-
 @Composable
-fun TodoItem(item: Todo, onDelete : ()-> Unit){
-    var checked by remember { mutableStateOf(false) }
+fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Unit) {
+    //var checked by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -205,34 +216,49 @@ fun TodoItem(item: Todo, onDelete : ()-> Unit){
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            Text(text = SimpleDateFormat("HH:mm, MM/dd/yyyy",
-                Locale.ENGLISH).format(item.createdAt),
+            Text(
+                text = SimpleDateFormat("HH:mm, MM/dd/yyyy", Locale.ENGLISH).format(item.createdAt),
                 fontSize = 10.sp,
-                color = Color.LightGray)
-            Text(text = item.title,
+                color = Color.LightGray
+            )
+            Text(
+                text = item.title,
                 fontSize = 20.sp,
-                color = Color.White)
+                color = Color.White
+            )
+
+            // Display the reminder time if it's set
+            item.reminderDate?.let { reminderDate ->
+                Text(
+                    text = "Reminder: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(Date(reminderDate))}",
+                    fontSize = 12.sp,
+                    color = Color.LightGray
+                )
+            }
         }
         Text(
-            if (checked) "Done!" else "",
+            if (item.isChecked) "Done!" else "",
             fontSize = 15.sp,
             color = Color.LightGray
         )
         Checkbox(
-            checked = checked,
-            onCheckedChange = { checked = it },
+            checked = item.isChecked,
+            onCheckedChange = { checked ->
+                //Log.d("Checkbox", "Checkbox clicked: $checked for item: ${item.id}")
+                onCheckedChange(checked) // Pass the change to the ViewModel or parent composable
+            },
             colors = CheckboxDefaults.colors(
-                checkedColor = Color.White,      // Color when the box is checked
-                uncheckedColor = Color.White,   // Color when the box is unchecked
-                checkmarkColor = Color.Black    // Color of the checkmark inside the box
+                checkedColor = Color.White,
+                uncheckedColor = Color.White,
+                checkmarkColor = Color.Black
             )
         )
-        IconButton(onClick = onDelete)
-        {
+        IconButton(onClick = onDelete) {
             Icon(
                 painter = painterResource(id = R.drawable.baseline_delete_24),
                 contentDescription = "Delete",
-                tint = Color.White)
+                tint = Color.White
+            )
         }
     }
 }
