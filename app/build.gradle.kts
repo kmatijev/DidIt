@@ -58,12 +58,16 @@ dependencies {
 
     // Room Kotlin Extensions and Coroutines Support
     implementation("androidx.room:room-ktx:2.6.0")
+    implementation(libs.androidx.media3.common.ktx)
 
     // Room Compiler for KSP
     ksp("androidx.room:room-compiler:2.6.0")
 
     // Optional - Testing Room
     testImplementation("androidx.room:room-testing:2.6.0")
+
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.core:core-ktx:1.12.0") // For NotificationCompat
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

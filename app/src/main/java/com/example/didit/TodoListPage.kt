@@ -18,6 +18,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -90,6 +92,7 @@ fun TodoListPage(viewModel: TodoViewModel) {
     var inputText by remember { mutableStateOf("") }
     var reminderDate by remember { mutableStateOf<Long?>(null)}
 
+
         Scaffold(
         topBar = {
             AppTopBar(
@@ -142,8 +145,8 @@ fun TodoListPage(viewModel: TodoViewModel) {
         TaskCreationDialog(
             showDialog = showDialog,
             onDismiss = { showDialog = false },
-            onAddTask = { title, reminder ->
-                viewModel.addTodo(title, reminder)
+            onAddTask = { title, reminder, priority ->
+                viewModel.addTodo(title, reminder, priority)
                 inputText = "" // Clear the input text
                 reminderDate = null // Reset reminder date
                 showDialog = false // Close the dialog
@@ -155,11 +158,12 @@ fun TodoListPage(viewModel: TodoViewModel) {
 fun TaskCreationDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onAddTask: (String, Long?) -> Unit
+    onAddTask: (String, Long?, Priority) -> Unit
 ) {
     if (showDialog) {
         var inputText by remember { mutableStateOf("") }
         var reminderDate by remember { mutableStateOf<Long?>(null) }
+        var selectedPriority by remember { mutableStateOf(Priority.LOW) }
 
         AlertDialog(
             onDismissRequest = { onDismiss() },
@@ -179,15 +183,14 @@ fun TaskCreationDialog(
                     reminderDate?.let {
                         Text("Reminder set for: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(it)}")
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             },
             confirmButton = {
                 Button(onClick = {
                     if (inputText.isNotBlank()) {
-                        onAddTask(inputText, reminderDate)
-                        inputText = ""  // Clear input text
-                        reminderDate = null  // Reset reminder date
-                        onDismiss()  // Close the dialog
+                        onAddTask(inputText, reminderDate, selectedPriority)
+                        onDismiss()
                     }
                 }) {
                     Text("Add")
@@ -201,8 +204,15 @@ fun TaskCreationDialog(
         )
     }
 }
+
+
 @Composable
 fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Unit) {
+    /*val priorityColor = when (item.priority) {
+        Priority.HIGH -> Color.Red
+        Priority.MEDIUM -> Color.Yellow
+        Priority.LOW -> Color.Green
+    }*/
     //var checked by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
@@ -226,11 +236,22 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
                 fontSize = 20.sp,
                 color = Color.White
             )
-
+            /*
+            Text(
+                text = "Priority: ${item.priority.name}",
+                fontSize = 14.sp,
+                color = priorityColor
+            )
+            */
             // Display the reminder time if it's set
             item.reminderDate?.let { reminderDate ->
                 Text(
-                    text = "Reminder: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(Date(reminderDate))}",
+                    text = "Reminder: ${
+                        SimpleDateFormat(
+                            "MM/dd/yyyy HH:mm",
+                            Locale.getDefault()
+                        ).format(Date(reminderDate))
+                    }",
                     fontSize = 12.sp,
                     color = Color.LightGray
                 )
@@ -253,6 +274,7 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
                 checkmarkColor = Color.Black
             )
         )
+        // Delete button
         IconButton(onClick = onDelete) {
             Icon(
                 painter = painterResource(id = R.drawable.baseline_delete_24),

@@ -3,6 +3,7 @@ package com.example.didit
 import android.app.Application
 import androidx.room.Room
 import com.example.didit.db.TodoDatabase
+import com.example.didit.utils.NotificationUtil
 
 class MainApplication : Application() {
 
@@ -11,6 +12,7 @@ class MainApplication : Application() {
     }
         override fun onCreate() {
             super.onCreate()
+            NotificationUtil.createNotificationChannel(this)
             todoDatabase = Room.databaseBuilder(
                 applicationContext,
                 TodoDatabase::class.java,
