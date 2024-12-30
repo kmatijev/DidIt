@@ -26,8 +26,8 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                 title = title,
                 createdAt = Date.from(Instant.now()),
                 reminderDate = reminder, // Pass the reminder date
-                isChecked = false // Set the initial state of the checkbox to unchecked
-                //priority = priority
+                isChecked = false, // Set the initial state of the checkbox to unchecked
+                priority = priority
             )
 
             // Add the task to the database

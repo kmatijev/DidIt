@@ -5,7 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.Date
 
 enum class Priority {
-    LOW, MEDIUM, HIGH
+    LOW,
+    MEDIUM,
+    HIGH
 }
 
 @Entity(tableName = "todos")
@@ -15,6 +17,6 @@ data class Todo(
     var title: String,
     var createdAt: Date,
     var reminderDate: Long? = null,
-    var isChecked: Boolean = false  // Add isChecked property
-    //var priority: Priority = Priority.LOW
+    var isChecked: Boolean = false,  // Add isChecked property
+    var priority: Priority = Priority.LOW
 )

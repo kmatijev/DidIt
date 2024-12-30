@@ -4,6 +4,9 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +14,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -27,8 +36,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -163,7 +174,7 @@ fun TaskCreationDialog(
     if (showDialog) {
         var inputText by remember { mutableStateOf("") }
         var reminderDate by remember { mutableStateOf<Long?>(null) }
-        var selectedPriority by remember { mutableStateOf(Priority.LOW) }
+        var selectedPriority by remember { mutableStateOf(Priority.LOW) } // Default to LOW
 
         AlertDialog(
             onDismissRequest = { onDismiss() },
@@ -180,17 +191,56 @@ fun TaskCreationDialog(
                         reminderDate = selectedDateTime
                     })
                     Spacer(modifier = Modifier.height(16.dp))
+
                     reminderDate?.let {
                         Text("Reminder set for: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(it)}")
                     }
+
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Display priority icons in a row
+                    Text("Priority:")
+                    Row(
+                        horizontalArrangement = Arrangement.Center, // Center align the icons
+                        verticalAlignment = Alignment.CenterVertically // Align icons vertically in the middle
+                    ) {
+                        IconButton(
+                            onClick = { selectedPriority = Priority.LOW }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_low_priority_24),
+                                contentDescription = "Low Priority",
+                                tint = if (selectedPriority == Priority.LOW) Color.Green else Color.Gray
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { selectedPriority = Priority.MEDIUM }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_priority_medium_24), // Medium priority icon
+                                contentDescription = "Medium Priority",
+                                tint = if (selectedPriority == Priority.MEDIUM) Color.Yellow else Color.Gray
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { selectedPriority = Priority.HIGH }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_priority_high_24), // High priority icon
+                                contentDescription = "High Priority",
+                                tint = if (selectedPriority == Priority.HIGH) Color.Red else Color.Gray
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 Button(onClick = {
                     if (inputText.isNotBlank()) {
                         onAddTask(inputText, reminderDate, selectedPriority)
-                        onDismiss()
+                        onDismiss() // Close the dialog
                     }
                 }) {
                     Text("Add")
@@ -204,6 +254,7 @@ fun TaskCreationDialog(
         )
     }
 }
+
 
 
 @Composable
