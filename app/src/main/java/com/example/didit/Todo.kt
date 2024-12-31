@@ -18,5 +18,6 @@ data class Todo(
     var createdAt: Date,
     var reminderDate: Long? = null,
     var isChecked: Boolean = false,  // Add isChecked property
-    var priority: Priority = Priority.LOW
+    var priority: Priority = Priority.LOW,
+    val category: String
 )

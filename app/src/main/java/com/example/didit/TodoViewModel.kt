@@ -19,7 +19,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     val todoList: LiveData<List<Todo>> = todoDao.getAllTodo()
 
-    fun addTodo(title: String, reminder: Long?, priority: Priority) {
+    fun addTodo(title: String, reminder: Long?, priority: Priority, category: String) {
         viewModelScope.launch(Dispatchers.IO) {
             // Create the new task object
             val newTodo = Todo(
@@ -27,7 +27,8 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                 createdAt = Date.from(Instant.now()),
                 reminderDate = reminder, // Pass the reminder date
                 isChecked = false, // Set the initial state of the checkbox to unchecked
-                priority = priority
+                priority = priority,
+                category = category
             )
 
             // Add the task to the database

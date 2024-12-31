@@ -4,31 +4,24 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,10 +29,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
@@ -156,8 +148,8 @@ fun TodoListPage(viewModel: TodoViewModel) {
         TaskCreationDialog(
             showDialog = showDialog,
             onDismiss = { showDialog = false },
-            onAddTask = { title, reminder, priority ->
-                viewModel.addTodo(title, reminder, priority)
+            onAddTask = { title, reminder, priority, category ->
+                viewModel.addTodo(title, reminder, priority, category)
                 inputText = "" // Clear the input text
                 reminderDate = null // Reset reminder date
                 showDialog = false // Close the dialog
@@ -169,12 +161,16 @@ fun TodoListPage(viewModel: TodoViewModel) {
 fun TaskCreationDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onAddTask: (String, Long?, Priority) -> Unit
+    onAddTask: (String, Long?, Priority, String) -> Unit
 ) {
     if (showDialog) {
         var inputText by remember { mutableStateOf("") }
         var reminderDate by remember { mutableStateOf<Long?>(null) }
         var selectedPriority by remember { mutableStateOf(Priority.LOW) } // Default to LOW
+        val priorities = listOf(Priority.LOW, Priority.MEDIUM, Priority.HIGH) // Priority options
+
+        var selectedCategory by remember { mutableStateOf("Others") } // Default to "Job"
+        val categories = listOf("Job", "Personal", "Hobbies", "Others") // Category options
 
         AlertDialog(
             onDismissRequest = { onDismiss() },
@@ -196,42 +192,71 @@ fun TaskCreationDialog(
                         Text("Reminder set for: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(it)}")
                     }
 
+
+                    Text("Category:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Category Selection
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        categories.forEach { category ->
+                            Button(
+                                onClick = { selectedCategory = category },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedCategory == category) MaterialTheme.colorScheme.primary else Color.LightGray
+                                ),
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .defaultMinSize(minWidth = 80.dp), // Ensures buttons are wide enough
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp) // Fine-tune padding
+                            ) {
+                                Text(
+                                    category,
+                                    color = Color.White,
+                                    fontSize = 14.sp, // Adjust font size to prevent wrapping
+                                    maxLines = 1, // Restrict to a single line
+                                    overflow = TextOverflow.Ellipsis // Truncate if the text is too long
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Display priority icons in a row
                     Text("Priority:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Priority Selection
                     Row(
-                        horizontalArrangement = Arrangement.Center, // Center align the icons
-                        verticalAlignment = Alignment.CenterVertically // Align icons vertically in the middle
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        IconButton(
-                            onClick = { selectedPriority = Priority.LOW }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_low_priority_24),
-                                contentDescription = "Low Priority",
-                                tint = if (selectedPriority == Priority.LOW) Color.Green else Color.Gray
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { selectedPriority = Priority.MEDIUM }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_priority_medium_24), // Medium priority icon
-                                contentDescription = "Medium Priority",
-                                tint = if (selectedPriority == Priority.MEDIUM) Color.Yellow else Color.Gray
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { selectedPriority = Priority.HIGH }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_priority_high_24), // High priority icon
-                                contentDescription = "High Priority",
-                                tint = if (selectedPriority == Priority.HIGH) Color.Red else Color.Gray
-                            )
+                        priorities.forEach { priority ->
+                            val priorityColor = when (priority) {
+                                Priority.HIGH -> Color(0xFFF28B82) // Light Coral
+                                Priority.MEDIUM -> Color(0xFFFFCC80) // Pale Orange
+                                Priority.LOW -> Color(0xFF80CBC4) // Soft Teal
+                            }
+                            Button(
+                                onClick = { selectedPriority = priority },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedPriority == priority) priorityColor else Color.LightGray
+                                ),
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .defaultMinSize(minWidth = 80.dp), // Ensures buttons are wide enough
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp) // Fine-tune padding
+                            ) {
+                                Text(
+                                    priority.name,
+                                    color = Color.White,
+                                    fontSize = 14.sp, // Adjust font size to prevent wrapping
+                                    maxLines = 1, // Restrict to a single line
+                                    overflow = TextOverflow.Ellipsis // Truncate if the text is too long
+                                )
+                            }
                         }
                     }
                 }
@@ -239,7 +264,7 @@ fun TaskCreationDialog(
             confirmButton = {
                 Button(onClick = {
                     if (inputText.isNotBlank()) {
-                        onAddTask(inputText, reminderDate, selectedPriority)
+                        onAddTask(inputText, reminderDate, selectedPriority, selectedCategory)
                         onDismiss() // Close the dialog
                     }
                 }) {
