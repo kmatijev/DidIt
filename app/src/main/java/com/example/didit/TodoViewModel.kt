@@ -6,6 +6,8 @@ import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.didit.utils.NotificationUtil
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +19,40 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val todoDao = MainApplication.todoDatabase.getTodoDao()
     private val context = application.applicationContext
 
+    private val _sortOption = MutableLiveData<SortOption>(SortOption.BY_PRIORITY) // Default sorting option
+    val sortOption: LiveData<SortOption> = _sortOption
+
+    private val _todoList = MediatorLiveData<List<Todo>>()
+
+    // LiveData for sorted tasks
+    val sortedTodos: LiveData<List<Todo>> = _todoList
+
+    // Fetch unsorted list (all todos)
+    private val allTodos: LiveData<List<Todo>> = todoDao.getAllTodo()
+
+    init {
+        // Initialize the MediatorLiveData to observe the changes from sortOption and allTodos
+        _todoList.addSource(allTodos) { todos ->
+            updateSortedList(todos, _sortOption.value)
+        }
+        _todoList.addSource(sortOption) { sortOption ->
+            updateSortedList(allTodos.value, sortOption)
+        }
+    }
+
+    private fun updateSortedList(todos: List<Todo>?, sortOption: SortOption?) {
+        if (todos == null || sortOption == null) return
+        _todoList.value = when (sortOption) {
+            SortOption.BY_PRIORITY -> todos.sortedBy { it.priority.sortOrder }
+            SortOption.BY_CATEGORY -> todos.sortedBy { it.category.name }
+            SortOption.BY_REMINDER -> todos.sortedBy { it.reminderDate }
+        }
+    }
+
+
     val todoList: LiveData<List<Todo>> = todoDao.getAllTodo()
 
-    fun addTodo(title: String, reminder: Long?, priority: Priority, category: String) {
+    fun addTodo(title: String, reminder: Long?, priority: Priority, category: Category) {
         viewModelScope.launch(Dispatchers.IO) {
             // Create the new task object
             val newTodo = Todo(
@@ -33,6 +66,9 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
             // Add the task to the database
             todoDao.addTodo(newTodo)
+
+            // Ensure the task is added correctly
+            Log.d("ViewModel", "Task added: $newTodo")
 
             // Schedule a notification if a reminder is set
             if (reminder != null) {

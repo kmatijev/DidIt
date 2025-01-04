@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -84,19 +87,27 @@ fun AppTopBar(
         }
     )
 }
+
 @Composable
 fun TodoListPage(viewModel: TodoViewModel) {
-    val todoList by viewModel.todoList.observeAsState()
+    val todoList by viewModel.todoList.observeAsState(emptyList())
 
-    // Debug log to check if the list and reminder date are correct
-    Log.d("TodoList", "Todo List: $todoList")
+    // Sorting state
+    var selectedSortOption by remember { mutableStateOf(SortOption.BY_PRIORITY) }
+    var isDropdownExpanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+
+    // Function to sort the list based on the selected option
+    val sortedTodoList = when (selectedSortOption) {
+        SortOption.BY_REMINDER -> todoList.sortedBy { it.reminderDate }
+        SortOption.BY_CATEGORY -> todoList.sortedBy { it.category.name }
+        SortOption.BY_PRIORITY -> todoList.sortedBy { it.priority.sortOrder }
+    }
+
+    Log.d("SortedTodoList", "Sorted by $selectedSortOption: $sortedTodoList")
 
     var showDialog by remember { mutableStateOf(false) }
-    var inputText by remember { mutableStateOf("") }
-    var reminderDate by remember { mutableStateOf<Long?>(null)}
 
-
-        Scaffold(
+    Scaffold(
         topBar = {
             AppTopBar(
                 title = "Todo List",
@@ -107,8 +118,10 @@ fun TodoListPage(viewModel: TodoViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(painter = painterResource(id = R.drawable.baseline_add_24),
-                    contentDescription = "Add Task")
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_add_24),
+                    contentDescription = "Add Task"
+                )
             }
         },
         content = { paddingValues ->
@@ -118,10 +131,55 @@ fun TodoListPage(viewModel: TodoViewModel) {
                     .padding(paddingValues)
                     .padding(8.dp)
             ) {
-                todoList?.let {
+                // Sorting Dropdown Trigger
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Sort By:")
+                    Box {
+                        Button(onClick = { isDropdownExpanded = true }) {
+                            Text(text = when (selectedSortOption) {
+                                SortOption.BY_PRIORITY -> "Priority"
+                                SortOption.BY_CATEGORY -> "Category"
+                                SortOption.BY_REMINDER -> "Reminder Time"
+                            })
+                        }
+                        DropdownMenu(
+                            expanded = isDropdownExpanded,
+                            onDismissRequest = { isDropdownExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Priority") },
+                                onClick = {
+                                    selectedSortOption = SortOption.BY_PRIORITY
+                                    isDropdownExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Category") },
+                                onClick = {
+                                    selectedSortOption = SortOption.BY_CATEGORY
+                                    isDropdownExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Reminder Time") },
+                                onClick = {
+                                    selectedSortOption = SortOption.BY_REMINDER
+                                    isDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Display tasks
+                if (sortedTodoList.isNotEmpty()) {
                     LazyColumn(
                         content = {
-                            itemsIndexed(todoList!!) { _: Int, item: Todo ->
+                            itemsIndexed(sortedTodoList) { _: Int, item: Todo ->
                                 TodoItem(
                                     item = item,
                                     onDelete = {
@@ -134,11 +192,13 @@ fun TodoListPage(viewModel: TodoViewModel) {
                             }
                         }
                     )
-                } ?: Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = "No tasks yet!"
-                )
+                } else {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        text = "No tasks yet!"
+                    )
+                }
             }
         }
     )
@@ -150,18 +210,25 @@ fun TodoListPage(viewModel: TodoViewModel) {
             onDismiss = { showDialog = false },
             onAddTask = { title, reminder, priority, category ->
                 viewModel.addTodo(title, reminder, priority, category)
-                inputText = "" // Clear the input text
-                reminderDate = null // Reset reminder date
                 showDialog = false // Close the dialog
-            })
+            }
+        )
     }
 }
+
+// Enum class for sorting options
+enum class SortOption {
+    BY_PRIORITY,
+    BY_CATEGORY,
+    BY_REMINDER
+}
+
 
 @Composable
 fun TaskCreationDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onAddTask: (String, Long?, Priority, String) -> Unit
+    onAddTask: (String, Long?, Priority, Category) -> Unit
 ) {
     if (showDialog) {
         var inputText by remember { mutableStateOf("") }
@@ -169,8 +236,8 @@ fun TaskCreationDialog(
         var selectedPriority by remember { mutableStateOf(Priority.LOW) } // Default to LOW
         val priorities = listOf(Priority.LOW, Priority.MEDIUM, Priority.HIGH) // Priority options
 
-        var selectedCategory by remember { mutableStateOf("Others") } // Default to "Job"
-        val categories = listOf("Job", "Personal", "Hobbies", "Others") // Category options
+        var selectedCategory by remember { mutableStateOf(Category.OTHERS) } // Default to "Job"
+        val categories = listOf(Category.PERSONAL, Category.JOB, Category.HOBBIES, Category.OTHERS) // Category options
 
         AlertDialog(
             onDismissRequest = { onDismiss() },
@@ -213,7 +280,7 @@ fun TaskCreationDialog(
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp) // Fine-tune padding
                             ) {
                                 Text(
-                                    category,
+                                    category.name,
                                     color = Color.White,
                                     fontSize = 14.sp, // Adjust font size to prevent wrapping
                                     maxLines = 1, // Restrict to a single line
@@ -284,12 +351,6 @@ fun TaskCreationDialog(
 
 @Composable
 fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Unit) {
-    /*val priorityColor = when (item.priority) {
-        Priority.HIGH -> Color.Red
-        Priority.MEDIUM -> Color.Yellow
-        Priority.LOW -> Color.Green
-    }*/
-    //var checked by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,14 +373,6 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
                 fontSize = 20.sp,
                 color = Color.White
             )
-            /*
-            Text(
-                text = "Priority: ${item.priority.name}",
-                fontSize = 14.sp,
-                color = priorityColor
-            )
-            */
-            // Display the reminder time if it's set
             item.reminderDate?.let { reminderDate ->
                 Text(
                     text = "Reminder: ${
