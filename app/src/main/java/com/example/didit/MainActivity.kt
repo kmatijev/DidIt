@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
@@ -23,11 +25,14 @@ class MainActivity : ComponentActivity() {
         // Initialize the database in MainActivity (if needed for the app's setup)
         val todoViewModel = ViewModelProvider(this)[TodoViewModel::class.java]
 
+
         enableEdgeToEdge() // Your setup code for UI if necessary
 
         // Set content with navigation
         setContent {
-            DidItTheme {
+            val isDarkMode by todoViewModel.isDarkMode.collectAsState()
+            // Use the isDarkMode state to determine the theme
+            DidItTheme(darkTheme = isDarkMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -50,11 +55,11 @@ fun MainApp(viewModel: TodoViewModel) {
         composable("todoListPage") {
             TodoListPage(
                 viewModel = viewModel,
-                onTasksClick = {
-                    navController.navigate("todoListPage")
-                },
                 onFinishedTasksClick = {
                     navController.navigate("finishedTasksPage")
+                },
+                onProfileClick = {
+                    navController.navigate("profilePage")
                 }
             )
         }
@@ -64,7 +69,20 @@ fun MainApp(viewModel: TodoViewModel) {
                 onTasksClick = {
                     navController.navigate("todoListPage")
                 },
-                onBackClick = { navController.popBackStack() }
+                onProfileClick = {
+                    navController.navigate("profilePage")
+                }
+            )
+        }
+        composable("profilePage") {
+            ProfilePage(
+                viewModel = viewModel,
+                onTasksClick = {
+                    navController.navigate("todoListPage")
+                },
+                onFinishedTasksClick = {
+                    navController.navigate("finishedTasksPage")
+                }
             )
         }
     }

@@ -4,6 +4,8 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -12,7 +14,10 @@ import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.didit.utils.NotificationUtil
+import com.example.didit.utils.PreferencesManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Date
@@ -115,5 +120,17 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                 }, delay)
             }
         }
+    }
+
+    private val preferencesManager = PreferencesManager(application)
+
+    // MutableStateFlow to manage the current theme state (light or dark)
+    private val _isDarkMode = MutableStateFlow(preferencesManager.getThemePreference())
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode
+
+    // Toggle theme and save the preference
+    fun toggleTheme() {
+        _isDarkMode.value = !_isDarkMode.value
+        preferencesManager.saveThemePreference(_isDarkMode.value)
     }
 }

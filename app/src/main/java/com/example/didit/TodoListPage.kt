@@ -94,8 +94,8 @@ fun AppTopBar(
 @Composable
 fun TodoListPage(
     viewModel: TodoViewModel,
-    onTasksClick: () -> Unit,  // Ensure this parameter is defined here
-    onFinishedTasksClick: () -> Unit
+    onFinishedTasksClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     val activeTasks by viewModel.activeTasks.observeAsState(emptyList())
 
@@ -123,8 +123,8 @@ fun TodoListPage(
         topBar = {
             AppTopBar(
                 title = "Todo List",
-                onProfileClick = { /* Handle profile click */ },
-                onTasksClick = onTasksClick,
+                onProfileClick = onProfileClick,
+                onTasksClick = {},
                 onFinishedTasksClick = onFinishedTasksClick
             )
         },
@@ -381,7 +381,7 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
             Text(
                 text = SimpleDateFormat("HH:mm, MM/dd/yyyy", Locale.ENGLISH).format(item.createdAt),
                 fontSize = 10.sp,
-                color = Color.LightGray
+                color = Color.White
             )
             Text(
                 text = item.title,
@@ -397,7 +397,7 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
                         ).format(Date(reminderDate))
                     }",
                     fontSize = 12.sp,
-                    color = Color.LightGray
+                    color = Color.White
                 )
             }
         }
