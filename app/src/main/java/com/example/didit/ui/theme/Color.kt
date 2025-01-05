@@ -1,9 +1,6 @@
 package com.example.didit.ui.theme
-
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
 
-import androidx.compose.material3.lightColorScheme
 
 val LightPrimary = Color(0xFF6200EE) // Example light theme primary color
 val LightOnPrimary = Color(0xFFFFFFFF) // Text color on primary
