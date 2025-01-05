@@ -33,9 +33,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -89,19 +92,28 @@ fun AppTopBar(
 }
 
 @Composable
-fun TodoListPage(viewModel: TodoViewModel) {
-    val todoList by viewModel.todoList.observeAsState(emptyList())
+fun TodoListPage(
+    viewModel: TodoViewModel,
+    onTasksClick: () -> Unit,  // Ensure this parameter is defined here
+    onFinishedTasksClick: () -> Unit
+) {
+    val activeTasks by viewModel.activeTasks.observeAsState(emptyList())
 
     // Sorting state
-    var selectedSortOption by remember { mutableStateOf(SortOption.BY_PRIORITY) }
+    var selectedSortOption by remember { mutableStateOf(SortOption.BY_PRIORITY) } // Default sort option
     var isDropdownExpanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
 
     // Function to sort the list based on the selected option
     val sortedTodoList = when (selectedSortOption) {
-        SortOption.BY_REMINDER -> todoList.sortedBy { it.reminderDate }
-        SortOption.BY_CATEGORY -> todoList.sortedBy { it.category.name }
-        SortOption.BY_PRIORITY -> todoList.sortedBy { it.priority.sortOrder }
+        SortOption.BY_REMINDER -> activeTasks.sortedBy { it.reminderDate }
+        SortOption.BY_CATEGORY -> activeTasks.sortedBy { it.category.name }
+        SortOption.BY_PRIORITY -> activeTasks.sortedBy { it.priority.sortOrder }
     }
+
+    // Snackbar host state
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
 
     Log.d("SortedTodoList", "Sorted by $selectedSortOption: $sortedTodoList")
 
@@ -112,8 +124,8 @@ fun TodoListPage(viewModel: TodoViewModel) {
             AppTopBar(
                 title = "Todo List",
                 onProfileClick = { /* Handle profile click */ },
-                onTasksClick = { /* Handle tasks click */ },
-                onFinishedTasksClick = { /* Handle finished tasks click */ }
+                onTasksClick = onTasksClick,
+                onFinishedTasksClick = onFinishedTasksClick
             )
         },
         floatingActionButton = {
@@ -124,6 +136,8 @@ fun TodoListPage(viewModel: TodoViewModel) {
                 )
             }
         },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)},
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -185,8 +199,9 @@ fun TodoListPage(viewModel: TodoViewModel) {
                                     onDelete = {
                                         viewModel.deleteTodo(item.id)
                                     },
-                                    onCheckedChange = { checked ->
-                                        viewModel.toggleTaskChecked(item.copy(isChecked = checked))
+                                    onCheckedChange = { checked -> viewModel.toggleTaskCompletion(item)
+                                    snackbarMessage = "Task ${item.title} done!"
+                                        showSnackbar = true
                                     }
                                 )
                             }
@@ -196,12 +211,18 @@ fun TodoListPage(viewModel: TodoViewModel) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        text = "No tasks yet!"
+                        text = "All tasks are done!"
                     )
                 }
             }
         }
     )
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            snackbarHostState.showSnackbar(snackbarMessage)
+            showSnackbar = false // Reset snackbar state
+        }
+    }
 
     // Dialog for Adding a Task
     if (showDialog) {
@@ -216,12 +237,6 @@ fun TodoListPage(viewModel: TodoViewModel) {
     }
 }
 
-// Enum class for sorting options
-enum class SortOption {
-    BY_PRIORITY,
-    BY_CATEGORY,
-    BY_REMINDER
-}
 
 
 @Composable
@@ -389,13 +404,12 @@ fun TodoItem(item: Todo, onDelete: () -> Unit, onCheckedChange: (Boolean) -> Uni
         Text(
             if (item.isChecked) "Done!" else "",
             fontSize = 15.sp,
-            color = Color.LightGray
+            color = Color.White
         )
         Checkbox(
             checked = item.isChecked,
             onCheckedChange = { checked ->
-                //Log.d("Checkbox", "Checkbox clicked: $checked for item: ${item.id}")
-                onCheckedChange(checked) // Pass the change to the ViewModel or parent composable
+                onCheckedChange(checked) // Trigger ViewModel update
             },
             colors = CheckboxDefaults.colors(
                 checkedColor = Color.White,

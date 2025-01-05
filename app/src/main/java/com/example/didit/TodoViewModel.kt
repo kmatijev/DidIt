@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.distinctUntilChanged
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.didit.utils.NotificationUtil
 import kotlinx.coroutines.Dispatchers
@@ -20,15 +22,20 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val context = application.applicationContext
 
     private val _sortOption = MutableLiveData<SortOption>(SortOption.BY_PRIORITY) // Default sorting option
-    val sortOption: LiveData<SortOption> = _sortOption
+    private val sortOption: LiveData<SortOption> = _sortOption
 
     private val _todoList = MediatorLiveData<List<Todo>>()
 
-    // LiveData for sorted tasks
-    val sortedTodos: LiveData<List<Todo>> = _todoList
-
     // Fetch unsorted list (all todos)
     private val allTodos: LiveData<List<Todo>> = todoDao.getAllTodo()
+
+    val activeTasks: LiveData<List<Todo>> = allTodos.map { list ->
+        list.filter { !it.isFinished }
+    }.distinctUntilChanged()
+
+    val finishedTasks: LiveData<List<Todo>> = allTodos.map { list ->
+        list.filter { it.isFinished }
+    }.distinctUntilChanged()
 
     init {
         // Initialize the MediatorLiveData to observe the changes from sortOption and allTodos
@@ -48,9 +55,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             SortOption.BY_REMINDER -> todos.sortedBy { it.reminderDate }
         }
     }
-
-
-    val todoList: LiveData<List<Todo>> = todoDao.getAllTodo()
 
     fun addTodo(title: String, reminder: Long?, priority: Priority, category: Category) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -77,11 +81,16 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun toggleTaskChecked(todo: Todo) {
+    fun toggleTaskCompletion(todo: Todo) {
         viewModelScope.launch(Dispatchers.IO) {
-            todoDao.updateTodo(todo.copy(isChecked = todo.isChecked)) // Update the 'isChecked' field
+
+            val updatedTodo = todo.copy(isFinished = !todo.isFinished, isChecked = !todo.isChecked)
+            todoDao.updateTodo(updatedTodo)
+
+            Log.d("TodoViewModel", "Task toggled: $updatedTodo")
         }
     }
+
 
     fun deleteTodo(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -106,5 +115,5 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                 }, delay)
             }
         }
-}
+    }
 }

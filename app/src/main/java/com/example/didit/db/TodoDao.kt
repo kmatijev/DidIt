@@ -26,7 +26,7 @@ interface TodoDao {
     fun addTodo(todo : Todo)
 
     @Update
-    fun updateTodo(todo: Todo)
+    suspend fun updateTodo(todo: Todo)
 
     @Query("Delete FROM todos where id = :id")
     fun deleteTodo(id : Int)

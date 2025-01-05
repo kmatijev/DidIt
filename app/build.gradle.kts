@@ -59,6 +59,7 @@ dependencies {
     // Room Kotlin Extensions and Coroutines Support
     implementation("androidx.room:room-ktx:2.6.0")
     implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.navigation.compose)
 
     // Room Compiler for KSP
     ksp("androidx.room:room-compiler:2.6.0")

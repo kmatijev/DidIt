@@ -14,6 +14,14 @@ enum class Category {
     JOB, PERSONAL, HOBBIES, OTHERS
 }
 
+// Enum class for sorting options
+enum class SortOption {
+    BY_PRIORITY,
+    BY_CATEGORY,
+    BY_REMINDER
+}
+
+
 @Entity(tableName = "todos")
 data class Todo(
     @PrimaryKey(autoGenerate = true)
@@ -23,5 +31,6 @@ data class Todo(
     var reminderDate: Long? = null,
     var isChecked: Boolean = false,
     var priority: Priority,
-    val category: Category = Category.OTHERS
+    val category: Category = Category.OTHERS,
+    val isFinished: Boolean = false  // Add this new field to track finished tasks
 )
