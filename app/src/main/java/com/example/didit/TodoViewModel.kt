@@ -22,7 +22,14 @@ import java.util.Date
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val todoDao = MainApplication.todoDatabase.getTodoDao()
+
     private val context = application.applicationContext
+
+    private val preferencesManager = PreferencesManager(application)
+
+    // MutableStateFlow to manage the current theme state (light or dark)
+    private val _isDarkMode = MutableStateFlow(preferencesManager.getThemePreference())
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode
 
     private val _sortOption = MutableLiveData<SortOption>(SortOption.BY_PRIORITY) // Default sorting option
     private val sortOption: LiveData<SortOption> = _sortOption
@@ -94,7 +101,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-
     fun deleteTodo(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             todoDao.deleteTodo(id)
@@ -119,12 +125,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    private val preferencesManager = PreferencesManager(application)
-
-    // MutableStateFlow to manage the current theme state (light or dark)
-    private val _isDarkMode = MutableStateFlow(preferencesManager.getThemePreference())
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode
 
     // Toggle theme and save the preference
     fun toggleTheme() {

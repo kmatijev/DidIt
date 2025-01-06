@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     //id("com.android.application") // or "com.android.library"
     //id("org.jetbrains.kotlin.android") // Kotlin plugin
-    id("com.google.devtools.ksp") version "1.9.10-1.0.13" // KSP plugin
+    id("com.google.devtools.ksp") version "1.9.10-1.0.13"
+    alias(libs.plugins.google.gms.google.services) // KSP plugin
 }
 
 android {
@@ -53,6 +54,9 @@ android {
 }
 
 dependencies {
+    // LeakCanary dependency
+    debugImplementation ("com.squareup.leakcanary:leakcanary-android:2.9.1")
+
     // Room Runtime
     implementation("androidx.room:room-runtime:2.6.0")
 
@@ -60,6 +64,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.0")
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.firebase.auth)
 
     // Room Compiler for KSP
     ksp("androidx.room:room-compiler:2.6.0")

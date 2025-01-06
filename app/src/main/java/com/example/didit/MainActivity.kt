@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -16,14 +17,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.didit.ui.theme.DidItTheme
+import com.google.firebase.FirebaseApp
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        FirebaseApp.initializeApp(this)
+
         // Initialize the database in MainActivity (if needed for the app's setup)
         val todoViewModel = ViewModelProvider(this)[TodoViewModel::class.java]
+        val authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
 
 
         enableEdgeToEdge() // Your setup code for UI if necessary
@@ -37,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainApp(todoViewModel) // MainApp composable that manages navigation
+                    MainApp(todoViewModel, authViewModel) // MainApp composable that manages navigation
                 }
             }
         }
@@ -45,16 +50,46 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainApp(viewModel: TodoViewModel) {
+fun MainApp(
+    todoViewModel: TodoViewModel,
+    authViewModel: AuthViewModel // Pass AuthViewModel for login management
+) {
     val navController = rememberNavController() // Create a NavController
+
+    // Observe the authentication state
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+
+    // Observe login state and handle navigation
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            navController.navigate("todoListPage") {
+                popUpTo(0) { inclusive = true } // Clear back stack to avoid login screen navigation issues
+            }
+        } else {
+            navController.navigate("loginPage") {
+                popUpTo(0) { inclusive = true } // Clear back stack for logout
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = "todoListPage"
+        startDestination = if (isLoggedIn) "todoListPage" else "loginPage"
     ) {
+        // Login Page
+        composable("loginPage") {
+            LoginPage(
+                viewModel = authViewModel,
+                onLoginSuccess = {
+                    navController.navigate("todoListPage")
+                }
+            )
+        }
+
+        // To-do List Page
         composable("todoListPage") {
             TodoListPage(
-                viewModel = viewModel,
+                viewModel = todoViewModel,
                 onFinishedTasksClick = {
                     navController.navigate("finishedTasksPage")
                 },
@@ -63,9 +98,11 @@ fun MainApp(viewModel: TodoViewModel) {
                 }
             )
         }
+
+        // Finished Tasks Page
         composable("finishedTasksPage") {
             FinishedTasksPage(
-                viewModel = viewModel,
+                viewModel = todoViewModel,
                 onTasksClick = {
                     navController.navigate("todoListPage")
                 },
@@ -74,9 +111,11 @@ fun MainApp(viewModel: TodoViewModel) {
                 }
             )
         }
+
+        // Profile Page
         composable("profilePage") {
             ProfilePage(
-                viewModel = viewModel,
+                viewModel = todoViewModel,
                 onTasksClick = {
                     navController.navigate("todoListPage")
                 },

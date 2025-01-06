@@ -23,11 +23,11 @@ interface TodoDao {
     fun getAllTodo(): LiveData<List<Todo>>
 
     @Insert
-    fun addTodo(todo : Todo)
+    suspend fun addTodo(todo : Todo)
 
     @Update
     suspend fun updateTodo(todo: Todo)
 
     @Query("Delete FROM todos where id = :id")
-    fun deleteTodo(id : Int)
+    suspend fun deleteTodo(id : Int)
 }

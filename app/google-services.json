@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "65231793831",
+    "project_id": "didit-5eddc",
+    "storage_bucket": "didit-5eddc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:65231793831:android:40c4e340109184a7453582",
+        "android_client_info": {
+          "package_name": "com.example.didit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz9IhA8PJyGZ7d-heeDfrIQlKmgG5Q89s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

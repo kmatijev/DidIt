@@ -115,7 +115,7 @@ fun TodoListPage(
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
 
-    Log.d("SortedTodoList", "Sorted by $selectedSortOption: $sortedTodoList")
+    //Log.d("SortedTodoList", "Sorted by $selectedSortOption: $sortedTodoList")
 
     var showDialog by remember { mutableStateOf(false) }
 
