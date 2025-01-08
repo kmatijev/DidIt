@@ -1,9 +1,7 @@
 package com.example.didit
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.example.didit.db.User
 import java.util.Date
 
 enum class Priority(val sortOrder: Int) {
@@ -23,19 +21,6 @@ enum class SortOption {
     BY_REMINDER
 }
 
-
-/*
-@Entity(
-    tableName = "todos",
-    foreignKeys = [
-        ForeignKey(
-            entity = User::class,
-            parentColumns = arrayOf("id"),
-            childColumns = arrayOf("userId"),
-            onDelete = ForeignKey.CASCADE // Optionally, delete tasks if the user is deleted
-        )
-    ]
-)*/
 @Entity(tableName = "todos")
 data class Todo(
     @PrimaryKey(autoGenerate = true)
@@ -46,6 +31,6 @@ data class Todo(
     var isChecked: Boolean = false,
     var priority: Priority,
     val category: Category = Category.OTHERS,
-    val isFinished: Boolean = false // Add this new field to track finished tasks
-    //val userId: Long // Foreign key to link the task to a specific user
+    val isFinished: Boolean = false, // Add this new field to track finished tasks
+    val userId: String // Foreign key to link the task to a specific user
 )

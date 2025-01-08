@@ -2,7 +2,6 @@ package com.example.didit
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

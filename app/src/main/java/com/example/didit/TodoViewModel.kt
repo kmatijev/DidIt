@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
@@ -20,8 +20,11 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Date
 
-class TodoViewModel(application: Application) : AndroidViewModel(application) {
+class TodoViewModel(application: Application, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
     private val todoDao = MainApplication.todoDatabase.getTodoDao()
+
+    private val userId: String
+        get() = authViewModel.userId
 
     private val context = application.applicationContext
 
@@ -31,13 +34,11 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val _isDarkMode = MutableStateFlow(preferencesManager.getThemePreference())
     val isDarkMode: StateFlow<Boolean> = _isDarkMode
 
-    private val _sortOption = MutableLiveData<SortOption>(SortOption.BY_PRIORITY) // Default sorting option
-    private val sortOption: LiveData<SortOption> = _sortOption
+    //private val _sortOption = MutableLiveData(SortOption.BY_PRIORITY) // Default sorting option
+    //private val sortOption: LiveData<SortOption> = _sortOption
 
     private val _todoList = MediatorLiveData<List<Todo>>()
-
-    // Fetch unsorted list (all todos)
-    private val allTodos: LiveData<List<Todo>> = todoDao.getAllTodo()
+    var allTodos: LiveData<List<Todo>> = _todoList
 
     val activeTasks: LiveData<List<Todo>> = allTodos.map { list ->
         list.filter { !it.isFinished }
@@ -48,6 +49,13 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     }.distinctUntilChanged()
 
     init {
+        // Observe changes in the logged-in user
+        _todoList.addSource(authViewModel.user.asLiveData()) { user ->
+            user?.let {
+                fetchTodosForUser(it.uid)
+            }
+        }
+        /*
         // Initialize the MediatorLiveData to observe the changes from sortOption and allTodos
         _todoList.addSource(allTodos) { todos ->
             updateSortedList(todos, _sortOption.value)
@@ -55,34 +63,51 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         _todoList.addSource(sortOption) { sortOption ->
             updateSortedList(allTodos.value, sortOption)
         }
+         */
     }
 
-    private fun updateSortedList(todos: List<Todo>?, sortOption: SortOption?) {
-        if (todos == null || sortOption == null) return
-        _todoList.value = when (sortOption) {
-            SortOption.BY_PRIORITY -> todos.sortedBy { it.priority.sortOrder }
-            SortOption.BY_CATEGORY -> todos.sortedBy { it.category.name }
-            SortOption.BY_REMINDER -> todos.sortedBy { it.reminderDate }
+    fun fetchTodosForUser(userId: String) {
+        val userTodos = todoDao.getAllTodosSortedByPriority(userId)
+        Log.d("TodoViewModel", "Fetching todos for user: $userId")
+        _todoList.addSource(userTodos) { todos ->
+            _todoList.value = todos
         }
     }
 
+    /*
+    fun updateSortOption(sortOption: SortOption) {
+        // Use the appropriate sorted query based on the chosen sortOption
+        allTodos = when (sortOption) {
+            SortOption.BY_PRIORITY -> todoDao.getAllTodosSortedByPriority(userId)
+            SortOption.BY_CATEGORY -> todoDao.getAllTodosSortedByCategory(userId)
+            SortOption.BY_REMINDER-> todoDao.getAllTodosSortedByReminder(userId)
+        }
+    }
+     */
+
     fun addTodo(title: String, reminder: Long?, priority: Priority, category: Category) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Create the new task object
+            val currentUserId = userId
+            if (currentUserId.isEmpty()) {
+                Log.e("TodoViewModel", "User is not authenticated")
+                return@launch // Do not add task if no user is authenticated
+            }
+
             val newTodo = Todo(
                 title = title,
                 createdAt = Date.from(Instant.now()),
-                reminderDate = reminder, // Pass the reminder date
-                isChecked = false, // Set the initial state of the checkbox to unchecked
+                reminderDate = reminder,
+                isChecked = false,
                 priority = priority,
-                category = category
+                category = category,
+                userId = currentUserId
             )
 
             // Add the task to the database
             todoDao.addTodo(newTodo)
 
-            // Ensure the task is added correctly
-            Log.d("ViewModel", "Task added: $newTodo")
+            // Log for debugging
+            Log.d("TodoViewModel", "Task added for userId $currentUserId: $newTodo")
 
             // Schedule a notification if a reminder is set
             if (reminder != null) {

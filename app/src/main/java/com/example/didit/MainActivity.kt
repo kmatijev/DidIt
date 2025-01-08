@@ -1,6 +1,7 @@
 package com.example.didit
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,14 +23,19 @@ import com.google.firebase.FirebaseApp
 
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var todoViewModel: TodoViewModel
+    //private lateinit var authViewModel: AuthViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         FirebaseApp.initializeApp(this)
 
-        // Initialize the database in MainActivity (if needed for the app's setup)
-        val todoViewModel = ViewModelProvider(this)[TodoViewModel::class.java]
-        val authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+        var authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+
+        // Initialize the TodoViewModel with the AuthViewModel
+        todoViewModel = TodoViewModel(application, authViewModel)
 
 
         enableEdgeToEdge() // Your setup code for UI if necessary
@@ -42,7 +49,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainApp(todoViewModel, authViewModel) // MainApp composable that manages navigation
+                    val navController = rememberNavController()
+                    MainApp(todoViewModel, authViewModel, navController) // MainApp composable that manages navigation
                 }
             }
         }
@@ -52,36 +60,68 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp(
     todoViewModel: TodoViewModel,
-    authViewModel: AuthViewModel // Pass AuthViewModel for login management
+    authViewModel: AuthViewModel,
+    navController: NavHostController
 ) {
-    val navController = rememberNavController() // Create a NavController
-
     // Observe the authentication state
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     // Observe login state and handle navigation
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
-            navController.navigate("todoListPage") {
-                popUpTo(0) { inclusive = true } // Clear back stack to avoid login screen navigation issues
-            }
+            navController.navigate("todoListPage")
         } else {
-            navController.navigate("loginPage") {
-                popUpTo(0) { inclusive = true } // Clear back stack for logout
-            }
+            navController.navigate("loginPage")
         }
     }
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) "todoListPage" else "loginPage"
+        startDestination = "loginPage"
     ) {
         // Login Page
         composable("loginPage") {
             LoginPage(
                 viewModel = authViewModel,
                 onLoginSuccess = {
-                    navController.navigate("todoListPage")
+                    navController.navigate("todoListPage") {
+                        // Make sure to pop the login page from the back stack after login
+                        popUpTo("loginPage") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onRegisterClick = {
+                    navController.navigate("registerPage")
+                },
+                onForgotPasswordClick = {
+                    navController.navigate("forgotPasswordPage")
+                }
+            )
+        }
+
+        // Register Page
+        composable("registerPage") {
+            RegisterPage(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    navController.popBackStack() },
+                onBackToLoginClick = {
+                    navController.popBackStack() }
+            )
+        }
+
+        // Forgotten Password Page
+        composable("forgotPasswordPage") {
+            ForgotPasswordPage(
+                viewModel = authViewModel,
+                onPasswordReset = {
+                    navController.navigate("loginPage") {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToLoginClick = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -116,11 +156,20 @@ fun MainApp(
         composable("profilePage") {
             ProfilePage(
                 viewModel = todoViewModel,
+                authViewModel = authViewModel,
                 onTasksClick = {
                     navController.navigate("todoListPage")
                 },
                 onFinishedTasksClick = {
                     navController.navigate("finishedTasksPage")
+                },
+                onLogout = {
+                    // Logout and clear the back stack, going back to the login page
+                    navController.navigate("loginPage") {
+                        Log.d("MainApp", "Logging out and clearing back stack")
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
