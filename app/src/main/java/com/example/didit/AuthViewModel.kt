@@ -1,8 +1,11 @@
 package com.example.didit
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.didit.db.UserObject
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +18,7 @@ import kotlinx.coroutines.withContext
 class AuthViewModel : ViewModel() {
 
     private val firebaseAuth = FirebaseAuth.getInstance()
+    private val userDao = MainApplication.userDatabase.getUserDao()
 
     var userId = ""
 
@@ -76,11 +80,14 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun register(email: String, password: String, callback: (Boolean) -> Unit) {
+    fun register(email: String, username: String, password: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
                 _authState.value = AuthState.Loading
-                firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                val newUser = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+
+                val newUserObject = UserObject(newUser.user?.uid ?: "", username, email)
+                userDao.addUser(newUserObject)
                 _authState.value = AuthState.Success
                 callback(true)
             } catch (e: Exception) {

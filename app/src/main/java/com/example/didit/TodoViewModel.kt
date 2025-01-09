@@ -7,10 +7,12 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.didit.db.UserObject
 import com.example.didit.utils.NotificationUtil
 import com.example.didit.utils.PreferencesManager
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,10 @@ import java.util.Date
 
 class TodoViewModel(application: Application, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
     private val todoDao = MainApplication.todoDatabase.getTodoDao()
+    private val userDao = MainApplication.userDatabase.getUserDao()
+
+    private val _user = MediatorLiveData<UserObject>()
+    val user: LiveData<UserObject> get() = _user
 
     private val userId: String
         get() = authViewModel.userId
@@ -36,6 +42,9 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
 
     private val _todoList = MediatorLiveData<List<Todo>>()
     var allTodos: LiveData<List<Todo>> = _todoList
+
+    private val _userData = MediatorLiveData<UserObject>()
+    var userData: LiveData<UserObject> = _userData
 
     val activeTasks: LiveData<List<Todo>> = allTodos.map { list ->
         list.filter { !it.isFinished }
@@ -52,15 +61,12 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
                 fetchTodosForUser(it.uid)
             }
         }
-        /*
-        // Initialize the MediatorLiveData to observe the changes from sortOption and allTodos
-        _todoList.addSource(allTodos) { todos ->
-            updateSortedList(todos, _sortOption.value)
+
+        _user.addSource(authViewModel.user.asLiveData()) { user ->
+            user?.let {
+                fetchUser(it.uid)
+            }
         }
-        _todoList.addSource(sortOption) { sortOption ->
-            updateSortedList(allTodos.value, sortOption)
-        }
-         */
     }
 
     fun fetchTodosForUser(userId: String) {
@@ -71,16 +77,12 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
         }
     }
 
-    /*
-    fun updateSortOption(sortOption: SortOption) {
-        // Use the appropriate sorted query based on the chosen sortOption
-        allTodos = when (sortOption) {
-            SortOption.BY_PRIORITY -> todoDao.getAllTodosSortedByPriority(userId)
-            SortOption.BY_CATEGORY -> todoDao.getAllTodosSortedByCategory(userId)
-            SortOption.BY_REMINDER-> todoDao.getAllTodosSortedByReminder(userId)
+    fun fetchUser(userId: String) {
+        viewModelScope.launch {
+            val user = userDao.getUser(userId) // Get the user from the database
+            _user.value = user // Set the username in state
         }
     }
-     */
 
     fun addTodo(title: String, reminder: Long?, priority: Priority, category: Category) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -112,45 +114,82 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
             }
         }
     }
-
-    fun toggleTaskCompletion(todo: Todo) {
+    /*
+    fun addUser(user: UserObject) {
         viewModelScope.launch(Dispatchers.IO) {
+            val newUser = UserObject(
+                userId = user.userId,
+                username = user.username,
+                email = user.email
+            )
 
-            val updatedTodo = todo.copy(isFinished = !todo.isFinished, isChecked = !todo.isChecked)
-            todoDao.updateTodo(updatedTodo)
+            // Add the task to the database
+            userDao.addUser(newUser)
 
-            Log.d("TodoViewModel", "Task toggled: $updatedTodo")
+            // Log for debugging
+            Log.d("TodoViewModel", "User added: $newUser")
+        }
+    }
+    */
+    fun updateUser(newUsername: String, mail: String, userId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentUserId = userId
+            if (currentUserId.isEmpty()) {
+                Log.e("TodoViewModel", "User is not authenticated")
+                return@launch // Do not add task if no user is authenticated
+            } else {
+                val updatedUser = UserObject(
+                    userId = currentUserId,
+                    username = newUsername,
+                    email = mail
+                )
+                userDao.updateUser(updatedUser)
+            }
+
+            // Log for debugging
+            Log.d("TodoViewModel", "User updated: $currentUserId, New username: $newUsername")
         }
     }
 
-    fun deleteTodo(id: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            todoDao.deleteTodo(id)
-        }
-    }
+        fun toggleTaskCompletion(todo: Todo) {
+            viewModelScope.launch(Dispatchers.IO) {
 
-    private fun scheduleNotification(title: String, reminderTime: Long?) {
-        reminderTime?.let {
-            val delay = reminderTime - System.currentTimeMillis()
+                val updatedTodo =
+                    todo.copy(isFinished = !todo.isFinished, isChecked = !todo.isChecked)
+                todoDao.updateTodo(updatedTodo)
 
-            // Check if the reminder time is in the future
-            if (delay > 0) {
-                Log.d("TodoViewModel", "Scheduling notification for task: $title in $delay ms")
-                // Schedule the notification after the delay
-                Handler(Looper.getMainLooper()).postDelayed({
-                    NotificationUtil.showNotification(
-                        context, // Pass the context here
-                        "Task Reminder",
-                        "Reminder for task: $title"
-                    )
-                }, delay)
+                Log.d("TodoViewModel", "Task toggled: $updatedTodo")
             }
         }
-    }
 
-    // Toggle theme and save the preference
-    fun toggleTheme() {
-        _isDarkMode.value = !_isDarkMode.value
-        preferencesManager.saveThemePreference(_isDarkMode.value)
+        fun deleteTodo(id: Int) {
+            viewModelScope.launch(Dispatchers.IO) {
+                todoDao.deleteTodo(id)
+            }
+        }
+
+        fun scheduleNotification(title: String, reminderTime: Long?) {
+            reminderTime?.let {
+                val delay = reminderTime - System.currentTimeMillis()
+
+                // Check if the reminder time is in the future
+                if (delay > 0) {
+                    Log.d("TodoViewModel", "Scheduling notification for task: $title in $delay ms")
+                    // Schedule the notification after the delay
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        NotificationUtil.showNotification(
+                            context, // Pass the context here
+                            "Task Reminder",
+                            "Reminder for task: $title"
+                        )
+                    }, delay)
+                }
+            }
+        }
+
+        // Toggle theme and save the preference
+        fun toggleTheme() {
+            _isDarkMode.value = !_isDarkMode.value
+            preferencesManager.saveThemePreference(_isDarkMode.value)
+        }
     }
-}

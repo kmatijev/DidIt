@@ -1,5 +1,6 @@
 package com.example.didit
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.didit.db.UserObject
 
 
 @Composable
@@ -39,6 +41,7 @@ fun RegisterPage(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Register form state
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var confirmEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -60,6 +63,14 @@ fun RegisterPage(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Email and Confirm Email Fields
+                TextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Username") },
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 // Email and Confirm Email Fields
                 TextField(
                     value = email,
@@ -96,8 +107,10 @@ fun RegisterPage(
                 // Register Button
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    enabled = email.isNotBlank() && password.isNotBlank() && email == confirmEmail && password == confirmPassword,
-                    onClick = { viewModel.register(email, password) { _ -> {} }},
+                    enabled = username.isNotBlank() && email.isNotBlank() && password.isNotBlank() && email == confirmEmail && password == confirmPassword,
+                    onClick = { viewModel.register(email, username, password) { _ -> {}
+                    }
+                    },
                     modifier = Modifier.fillMaxWidth(0.8f)
                 ) {
                     Text("Register")

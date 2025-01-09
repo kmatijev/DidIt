@@ -1,14 +1,19 @@
 package com.example.didit.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface UserDao {
-    @Insert
-    suspend fun insertUser(user: User)
+    @Query("SELECT * FROM users WHERE userId = :userId")
+    suspend fun getUser(userId: String): UserObject
 
-    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
-    suspend fun getUserByEmail(email: String): User?
+    @Update
+    suspend fun updateUser(user: UserObject)
+
+    @Insert
+    suspend fun addUser(user: UserObject)
 }

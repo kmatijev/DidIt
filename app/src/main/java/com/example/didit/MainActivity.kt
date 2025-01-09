@@ -49,7 +49,11 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    MainApp(todoViewModel, authViewModel, navController) // MainApp composable that manages navigation
+                    MainApp(
+                        todoViewModel,
+                        authViewModel,
+                        //profileViewModel,
+                        navController) // MainApp composable that manages navigation
                 }
             }
         }
@@ -103,7 +107,10 @@ fun MainApp(
             RegisterPage(
                 viewModel = authViewModel,
                 onRegisterSuccess = {
-                    navController.popBackStack() },
+                    navController.navigate("loginPage") {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    } },
                 onBackToLoginClick = {
                     navController.popBackStack() }
             )
