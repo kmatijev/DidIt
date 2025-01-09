@@ -34,9 +34,6 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     private val _isDarkMode = MutableStateFlow(preferencesManager.getThemePreference())
     val isDarkMode: StateFlow<Boolean> = _isDarkMode
 
-    //private val _sortOption = MutableLiveData(SortOption.BY_PRIORITY) // Default sorting option
-    //private val sortOption: LiveData<SortOption> = _sortOption
-
     private val _todoList = MediatorLiveData<List<Todo>>()
     var allTodos: LiveData<List<Todo>> = _todoList
 
@@ -67,7 +64,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     }
 
     fun fetchTodosForUser(userId: String) {
-        val userTodos = todoDao.getAllTodosSortedByPriority(userId)
+        val userTodos = todoDao.getAllTodos(userId)
         Log.d("TodoViewModel", "Fetching todos for user: $userId")
         _todoList.addSource(userTodos) { todos ->
             _todoList.value = todos

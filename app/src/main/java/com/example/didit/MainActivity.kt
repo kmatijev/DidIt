@@ -25,7 +25,6 @@ import com.google.firebase.FirebaseApp
 class MainActivity : ComponentActivity() {
 
     private lateinit var todoViewModel: TodoViewModel
-    //private lateinit var authViewModel: AuthViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

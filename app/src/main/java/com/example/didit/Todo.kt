@@ -11,7 +11,7 @@ enum class Priority(val sortOrder: Int) {
 }
 
 enum class Category {
-    JOB, PERSONAL, HOBBIES, OTHERS
+    JOB, PERSONAL, HOBBIES, OTHERS, ALL
 }
 
 // Enum class for sorting options

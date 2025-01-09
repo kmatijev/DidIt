@@ -5,19 +5,23 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.example.didit.Category
 import com.example.didit.Todo
 
 @Dao
 interface TodoDao {
 
-    @Query("SELECT * FROM todos WHERE userId = :userId ORDER BY createdAt DESC")
-    fun getAllTodosSortedByReminder(userId: String): LiveData<List<Todo>>
+    //@Query("SELECT * FROM todos WHERE userId = :userId ORDER BY createdAt DESC")
+    //fun getAllTodosSortedByReminder(userId: String): LiveData<List<Todo>>
 
-    @Query("SELECT * FROM todos WHERE userId = :userId ORDER BY category ASC")
-    fun getAllTodosSortedByCategory(userId: String): LiveData<List<Todo>>
+    //@Query("SELECT * FROM todos WHERE userId = :userId ORDER BY category ASC")
+    //fun getAllTodosSortedByCategory(userId: String): LiveData<List<Todo>>
 
-    @Query("SELECT * FROM todos WHERE userId = :userId ORDER BY priority DESC")
-    fun getAllTodosSortedByPriority(userId: String): LiveData<List<Todo>>
+    @Query("SELECT * FROM todos WHERE userId = :userId")
+    fun getAllTodos(userId: String): LiveData<List<Todo>>
+
+    @Query("SELECT * FROM todos WHERE userId = :userId AND category = :category")
+    fun getTodosByUserAndCategory(userId: Int, category: String): LiveData<List<Todo>>
 
     /*
     // Get all todos for a specific user

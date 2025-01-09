@@ -2,6 +2,7 @@ package com.example.didit
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -99,14 +105,33 @@ fun TodoListPage(
     val activeTasks by viewModel.activeTasks.observeAsState(emptyList())
 
     // Sorting state
-    var selectedSortOption by remember { mutableStateOf(SortOption.BY_PRIORITY) } // Default sort option
-    var isDropdownExpanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+    var selectedSortOption by remember { mutableStateOf(SortOption.BY_PRIORITY) } // Default sort option4
+    var selectedFilterOption by remember { mutableStateOf(Category.ALL) } // Default sort option
+    var isSortingDropdownExpanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+    var isFilteringDropdownExpanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+
+    val categories = listOf(
+        Category.ALL,
+        Category.JOB,
+        Category.PERSONAL,
+        Category.HOBBIES,
+        Category.OTHERS)
+
 
     // Function to sort the list based on the selected option
     val sortedTodoList = when (selectedSortOption) {
         SortOption.BY_REMINDER -> activeTasks.sortedBy { it.reminderDate }
         SortOption.BY_CATEGORY -> activeTasks.sortedBy { it.category.name }
         SortOption.BY_PRIORITY -> activeTasks.sortedBy { it.priority.sortOrder }
+    }
+
+    val filteredTodoList = remember(selectedFilterOption, sortedTodoList) {
+        if (selectedFilterOption == Category.ALL) sortedTodoList
+        else
+        {
+            Log.d("TodoListPage", "Filtering by $selectedFilterOption")
+            sortedTodoList.filter { it.category == selectedFilterOption }
+        }
     }
 
     // Snackbar host state
@@ -144,55 +169,91 @@ fun TodoListPage(
                     .padding(paddingValues)
                     .padding(8.dp)
             ) {
-                // Sorting Dropdown Trigger
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Sort By:")
-                    Box {
-                        Button(onClick = { isDropdownExpanded = true }) {
+                    Box(
+                        modifier = Modifier.width(100.dp)
+                    ) {
+                        TextButton(onClick = { isSortingDropdownExpanded = true }) {
                             Text(text = when (selectedSortOption) {
-                                SortOption.BY_PRIORITY -> "Priority"
-                                SortOption.BY_CATEGORY -> "Category"
-                                SortOption.BY_REMINDER -> "Reminder Time"
-                            })
+                                SortOption.BY_PRIORITY -> "PRIORITY"
+                                SortOption.BY_CATEGORY -> "CATEGORY"
+                                SortOption.BY_REMINDER -> "REMINDER"
+                            },
+                                maxLines = 1, // Ensures single-line text
+                                textAlign = TextAlign.Center)// Center-align text
                         }
                         DropdownMenu(
-                            expanded = isDropdownExpanded,
-                            onDismissRequest = { isDropdownExpanded = false }
+                            expanded = isSortingDropdownExpanded,
+                            onDismissRequest = { isSortingDropdownExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Priority") },
+                                text = { Text("PRIORITY") },
                                 onClick = {
                                     selectedSortOption = SortOption.BY_PRIORITY
-                                    isDropdownExpanded = false
+                                    isSortingDropdownExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Category") },
+                                text = { Text("CATEGORY") },
                                 onClick = {
                                     selectedSortOption = SortOption.BY_CATEGORY
-                                    isDropdownExpanded = false
+                                    isSortingDropdownExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Reminder Time") },
+                                text = { Text("REMINDER TIME") },
                                 onClick = {
                                     selectedSortOption = SortOption.BY_REMINDER
-                                    isDropdownExpanded = false
+                                    isSortingDropdownExpanded = false
                                 }
                             )
+                        }
+                    }
+
+                    //Spacer(modifier = Modifier.width(16.dp))
+
+                    Text(text = "Filter by: ")
+
+                    Box(
+                        modifier = Modifier.width(100.dp)
+                    ){
+                        TextButton(
+                            onClick = { isFilteringDropdownExpanded = true },
+                        ) {
+                            Text(text = selectedFilterOption.name)
+                        }
+
+                        DropdownMenu(
+                            expanded = isFilteringDropdownExpanded,
+                            onDismissRequest = { isFilteringDropdownExpanded = false },
+                        ) {
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text(
+                                        category.name,
+                                        maxLines = 1, // Ensures single-line text
+                                        textAlign = TextAlign.Center) },
+                                    onClick = {
+                                        selectedFilterOption = category
+                                        isFilteringDropdownExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
 
                 // Display tasks
-                if (sortedTodoList.isNotEmpty()) {
+                if (filteredTodoList.isNotEmpty()) {
                     LazyColumn(
                         content = {
-                            itemsIndexed(sortedTodoList) { _: Int, item: Todo ->
+                            itemsIndexed(filteredTodoList) { _: Int, item: Todo ->
                                 TodoItem(
                                     item = item,
                                     onDelete = {
@@ -207,11 +268,19 @@ fun TodoListPage(
                         }
                     )
                 } else {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = "All tasks are done!"
-                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize() // Fills the screen
+                            .padding(16.dp), // Optional: Adds some padding around the icon
+                        contentAlignment = Alignment.Center // Centers the icon in the middle
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_inbox_24),
+                            contentDescription = "No tasks to display",
+                            modifier = Modifier.size(76.dp).align(Alignment.Center),
+                        )
+                    }
                 }
             }
         }
