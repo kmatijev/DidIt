@@ -29,7 +29,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.didit.viewmodels.AuthState
 import com.example.didit.viewmodels.AuthViewModel
-import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
 
 @Composable
