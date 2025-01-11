@@ -1,7 +1,6 @@
 package com.example.didit.db
 
 import androidx.room.TypeConverter
-import com.example.didit.Category
 import java.util.Date
 
 class Converters {

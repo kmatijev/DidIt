@@ -1,9 +1,9 @@
-package com.example.didit
+package com.example.didit.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.didit.MainApplication
 import com.example.didit.db.UserObject
 
 import com.google.firebase.auth.FirebaseAuth
@@ -89,7 +89,7 @@ class AuthViewModel : ViewModel() {
 
                 val newUserObject = UserObject(newUser.user?.uid ?: "", username, email)
                 userDao.addUser(newUserObject)
-                //_authState.value = AuthState.Success
+                _authState.value = AuthState.Success
                 callback(true)
             } catch (e: Exception) {
                 val errorMessage = when {
@@ -114,7 +114,8 @@ class AuthViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 // General error handling
-                _authState.value = AuthState.Error("Password reset failed. Please check your e-mail and try again.")
+                _authState.value =
+                    AuthState.Error("Password reset failed. Please check your e-mail and try again.")
                 callback(false)
             }
         }

@@ -1,18 +1,20 @@
-package com.example.didit
+package com.example.didit.viewmodels
 
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.compose.runtime.State
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.didit.db.Category
+import com.example.didit.MainApplication
+import com.example.didit.db.Priority
+import com.example.didit.db.Todo
 import com.example.didit.db.UserObject
 import com.example.didit.utils.NotificationUtil
 import com.example.didit.utils.PreferencesManager
@@ -28,12 +30,14 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     private val todoDao = MainApplication.todoDatabase.getTodoDao()
     private val userDao = MainApplication.userDatabase.getUserDao()
 
+    private val context = application.applicationContext
+
+
     private val _user = MediatorLiveData<UserObject>()
     val user: LiveData<UserObject> get() = _user
 
-    private val userId = authViewModel.userId
-
-    private val context = application.applicationContext
+    private val userId: String
+        get() = authViewModel.userId
 
     private val preferencesManager = PreferencesManager(application)
 
@@ -54,15 +58,15 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
 
     init {
 
-        _todoList.addSource(authViewModel.user.asLiveData()) { user ->
-            user?.let {
-                fetchTodosForUser(it.uid)
-            }
-        }
-
         _user.addSource(authViewModel.user.asLiveData()) { user ->
             user?.let {
                 fetchUser(it.uid)
+            }
+        }
+
+        _todoList.addSource(authViewModel.user.asLiveData()) { user ->
+            user?.let {
+                fetchTodosForUser(it.uid)
             }
         }
     }

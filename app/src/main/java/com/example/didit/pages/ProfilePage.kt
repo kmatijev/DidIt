@@ -1,11 +1,10 @@
-package com.example.didit
+package com.example.didit.pages
 
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -40,11 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import com.example.didit.utils.AppTopBar
+import com.example.didit.viewmodels.AuthViewModel
+import com.example.didit.R
+import com.example.didit.utils.CircularProfileImage
+import com.example.didit.viewmodels.TodoViewModel
+import com.example.didit.viewmodels.UserViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,9 +135,7 @@ fun ProfilePage(
                             tint = Color.White
                         )
                     } else {
-                        Base64Image(
-                            base64String = profileImageUrl ?: ""
-                        )
+                        CircularProfileImage(base64String = profileImageUrl?: "")
                     }
                 }
 

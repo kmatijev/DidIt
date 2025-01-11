@@ -1,18 +1,12 @@
-package com.example.didit
+package com.example.didit.viewmodels
 
 import android.app.Application
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
-import androidx.compose.foundation.Image
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.didit.db.UserDao
+import com.example.didit.MainApplication
 import kotlinx.coroutines.launch
 
 class UserViewModel(application: Application, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {

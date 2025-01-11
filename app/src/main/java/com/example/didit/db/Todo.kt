@@ -1,4 +1,4 @@
-package com.example.didit
+package com.example.didit.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

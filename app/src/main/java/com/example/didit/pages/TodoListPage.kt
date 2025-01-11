@@ -1,4 +1,4 @@
-package com.example.didit
+package com.example.didit.pages
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -52,9 +52,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.didit.utils.AppTopBar
+import com.example.didit.db.Category
+import com.example.didit.db.Priority
+import com.example.didit.R
+import com.example.didit.db.SortOption
+import com.example.didit.db.Todo
+import com.example.didit.viewmodels.TodoViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -80,7 +86,8 @@ fun TodoListPage(
         Category.JOB,
         Category.PERSONAL,
         Category.HOBBIES,
-        Category.OTHERS)
+        Category.OTHERS
+    )
 
 
     // Function to sort the list based on the selected option

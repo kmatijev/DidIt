@@ -1,4 +1,4 @@
-package com.example.didit
+package com.example.didit.pages
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,6 +14,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.didit.utils.AppTopBar
+import com.example.didit.viewmodels.TodoViewModel
 
 @Composable
 fun FinishedTasksPage(

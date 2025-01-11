@@ -1,10 +1,12 @@
-package com.example.didit
+package com.example.didit.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
+import com.example.didit.db.Category
+import com.example.didit.MainApplication
 
 class StatisticsViewModel(application: Application, authViewModel: AuthViewModel) : AndroidViewModel(application) {
 

@@ -1,4 +1,4 @@
-package com.example.didit
+package com.example.didit.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.didit.viewmodels.AuthState
+import com.example.didit.viewmodels.AuthViewModel
 
 @Composable
 fun ForgotPasswordPage(

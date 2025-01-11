@@ -1,6 +1,5 @@
-package com.example.didit
+package com.example.didit.pages
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.didit.db.UserObject
+import com.example.didit.viewmodels.AuthState
+import com.example.didit.viewmodels.AuthViewModel
+import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
 
 @Composable

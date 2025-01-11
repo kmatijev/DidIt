@@ -18,7 +18,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.didit.pages.FinishedTasksPage
+import com.example.didit.pages.ForgotPasswordPage
+import com.example.didit.pages.LoginPage
+import com.example.didit.pages.ProfilePage
+import com.example.didit.pages.RegisterPage
+import com.example.didit.pages.TaskStatisticsPage
+import com.example.didit.pages.TodoListPage
 import com.example.didit.ui.theme.DidItTheme
+import com.example.didit.viewmodels.AuthState
+import com.example.didit.viewmodels.AuthViewModel
+import com.example.didit.viewmodels.StatisticsViewModel
+import com.example.didit.viewmodels.TodoViewModel
+import com.example.didit.viewmodels.UserViewModel
 import com.google.firebase.FirebaseApp
 
 
@@ -115,6 +127,7 @@ fun MainApp(
             RegisterPage(
                 viewModel = authViewModel,
                 onRegisterSuccess = {
+                    authViewModel.resetAuthState()
                     navController.navigate("loginPage") {
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
