@@ -66,52 +66,70 @@ fun TaskStatisticsPage(
             )
         },
         content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Task Completion Progress (Circular Progress)
-                Text(
-                    text = "Task Completion",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if(totalTasks == 0)
-                {
-                    Icon(painter = painterResource(id = R.drawable.baseline_date_range_24),
-                        contentDescription = "Tasks")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("No tasks available")
-                }
-                else {
-                    CircularProgressIndicator(
-                        progress = { taskCompletionPercentage / 100f },
-                        modifier = Modifier.size(150.dp),
-                        color = MaterialTheme.colorScheme.primary, // This is the completed task color
-                        strokeWidth = 12.dp, // Increase the thickness
-                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), // Customize the incomplete part color
+            if (totalTasks == 0) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize() // Fills the screen
+                        .padding(16.dp), // Optional: Adds some padding around the icon
+                    contentAlignment = Alignment.Center // Centers the icon in the middle
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_inbox_24),
+                        contentDescription = "No tasks to display",
+                        modifier = Modifier.size(76.dp).align(Alignment.Center),
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("${taskCompletionPercentage.toInt()}% Completed", fontSize = 18.sp)
                 }
+            }
+            else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Task Completion Progress (Circular Progress)
+                    Text(
+                        text = "Task Completion",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // Category Stats (Bar Chart)
-                Text(
-                    text = "Category Completion Stats",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                    if (totalTasks == 0) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_date_range_24),
+                            contentDescription = "Tasks"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("No tasks available")
+                    } else {
+                        CircularProgressIndicator(
+                            progress = { taskCompletionPercentage / 100f },
+                            modifier = Modifier.size(150.dp),
+                            color = MaterialTheme.colorScheme.primary, // This is the completed task color
+                            strokeWidth = 12.dp, // Increase the thickness
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), // Customize the incomplete part color
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("${taskCompletionPercentage.toInt()}% Completed", fontSize = 18.sp)
+                    }
 
-                CategoryBarChart(
-                    sortedCategoryStats,
-                    modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Category Stats (Bar Chart)
+                    Text(
+                        text = "Category Completion Stats",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    CategoryBarChart(
+                        sortedCategoryStats,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
         })

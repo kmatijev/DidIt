@@ -263,8 +263,14 @@ fun TodoListPage(
         TaskCreationDialog(
             showDialog = showDialog,
             onDismiss = { showDialog = false },
-            onAddTask = { title, reminder, priority, category ->
-                viewModel.addTodo(title, reminder, priority, category)
+            onAddTask = { title, reminder, priority, category, repeatFrequency ->
+                if (reminder != null) {
+                    viewModel.addTodo(title, reminder, priority, category, repeatFrequency)
+                }
+                else
+                {
+                    viewModel.addTodo(title, null, priority, category, null)
+                }
                 showDialog = false // Close the dialog
             }
         )
@@ -277,16 +283,18 @@ fun TodoListPage(
 fun TaskCreationDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onAddTask: (String, Long?, Priority, Category) -> Unit
+    onAddTask: (String, Long?, Priority, Category, String?) -> Unit // Added repeatFrequency as a parameter
 ) {
     if (showDialog) {
         var inputText by remember { mutableStateOf("") }
         var reminderDate by remember { mutableStateOf<Long?>(null) }
-        var selectedPriority by remember { mutableStateOf(Priority.LOW) } // Default to LOW
-        val priorities = listOf(Priority.LOW, Priority.MEDIUM, Priority.HIGH) // Priority options
+        var selectedPriority by remember { mutableStateOf(Priority.LOW) }
+        val priorities = listOf(Priority.LOW, Priority.MEDIUM, Priority.HIGH)
 
-        var selectedCategory by remember { mutableStateOf(Category.OTHERS) } // Default to "Job"
-        val categories = listOf(Category.PERSONAL, Category.JOB, Category.HOBBIES, Category.OTHERS) // Category options
+        var selectedCategory by remember { mutableStateOf(Category.OTHERS) }
+        val categories = listOf(Category.PERSONAL, Category.JOB, Category.HOBBIES, Category.OTHERS)
+
+        var repeatFrequency by remember { mutableStateOf<String?>(null) } // Store the repeat frequency
 
         AlertDialog(
             onDismissRequest = { onDismiss() },
@@ -299,6 +307,7 @@ fun TaskCreationDialog(
                         label = { Text("Task Title") }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
                     DateTimePicker(onDateTimeSelected = { selectedDateTime ->
                         reminderDate = selectedDateTime
                     })
@@ -308,10 +317,8 @@ fun TaskCreationDialog(
                         Text("Reminder set for: ${SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).format(it)}")
                     }
 
-
                     Text("Category:")
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Category Selection
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
@@ -325,16 +332,10 @@ fun TaskCreationDialog(
                                 ),
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
-                                    .defaultMinSize(minWidth = 80.dp), // Ensures buttons are wide enough
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp) // Fine-tune padding
+                                    .defaultMinSize(minWidth = 80.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text(
-                                    category.name,
-                                    color = Color.White,
-                                    fontSize = 14.sp, // Adjust font size to prevent wrapping
-                                    maxLines = 1, // Restrict to a single line
-                                    overflow = TextOverflow.Ellipsis // Truncate if the text is too long
-                                )
+                                Text(category.name, color = Color.White, fontSize = 14.sp)
                             }
                         }
                     }
@@ -343,7 +344,6 @@ fun TaskCreationDialog(
 
                     Text("Priority:")
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Priority Selection
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
@@ -351,9 +351,9 @@ fun TaskCreationDialog(
                     ) {
                         priorities.forEach { priority ->
                             val priorityColor = when (priority) {
-                                Priority.HIGH -> Color(0xFFF28B82) // Light Coral
-                                Priority.MEDIUM -> Color(0xFFFFCC80) // Pale Orange
-                                Priority.LOW -> Color(0xFF80CBC4) // Soft Teal
+                                Priority.HIGH -> Color(0xFFF28B82)
+                                Priority.MEDIUM -> Color(0xFFFFCC80)
+                                Priority.LOW -> Color(0xFF80CBC4)
                             }
                             Button(
                                 onClick = { selectedPriority = priority },
@@ -362,16 +362,35 @@ fun TaskCreationDialog(
                                 ),
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
-                                    .defaultMinSize(minWidth = 80.dp), // Ensures buttons are wide enough
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp) // Fine-tune padding
+                                    .defaultMinSize(minWidth = 80.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text(
-                                    priority.name,
-                                    color = Color.White,
-                                    fontSize = 14.sp, // Adjust font size to prevent wrapping
-                                    maxLines = 1, // Restrict to a single line
-                                    overflow = TextOverflow.Ellipsis // Truncate if the text is too long
-                                )
+                                Text(priority.name, color = Color.White, fontSize = 14.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Repeat Frequency:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf("Daily", "Weekly", "Monthly").forEach { frequency ->
+                            Button(
+                                onClick = { repeatFrequency = frequency },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (repeatFrequency == frequency) MaterialTheme.colorScheme.primary else Color.LightGray
+                                ),
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .defaultMinSize(minWidth = 80.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(frequency, color = Color.White, fontSize = 14.sp)
                             }
                         }
                     }
@@ -380,8 +399,21 @@ fun TaskCreationDialog(
             confirmButton = {
                 Button(onClick = {
                     if (inputText.isNotBlank()) {
-                        onAddTask(inputText, reminderDate, selectedPriority, selectedCategory)
-                        onDismiss() // Close the dialog
+                        // Adjust the reminder date based on the repeat frequency
+                        val adjustedReminderDate = when (repeatFrequency) {
+                            "Daily" -> reminderDate?.plus(24 * 60 * 60 * 1000) // Add 1 day
+                            "Weekly" -> reminderDate?.plus(7 * 24 * 60 * 60 * 1000) // Add 1 week
+                            "Monthly" -> reminderDate?.let {
+                                Calendar.getInstance().apply {
+                                    timeInMillis = it
+                                    add(Calendar.MONTH, 1)
+                                }.timeInMillis
+                            }
+                            else -> reminderDate
+                        }
+
+                        onAddTask(inputText, adjustedReminderDate, selectedPriority, selectedCategory, repeatFrequency)
+                        onDismiss()
                     }
                 }) {
                     Text("Add")
@@ -395,6 +427,7 @@ fun TaskCreationDialog(
         )
     }
 }
+
 
 
 

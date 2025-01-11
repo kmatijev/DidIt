@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.Calendar
 import java.util.Date
 
 class TodoViewModel(application: Application, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
@@ -30,8 +31,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     private val _user = MediatorLiveData<UserObject>()
     val user: LiveData<UserObject> get() = _user
 
-    private val userId: String
-        get() = authViewModel.userId
+    private val userId = authViewModel.userId
 
     private val context = application.applicationContext
 
@@ -82,7 +82,13 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
         }
     }
 
-    fun addTodo(title: String, reminder: Long?, priority: Priority, category: Category) {
+    fun addTodo(
+        title: String,
+        reminder: Long?,
+        priority: Priority,
+        category: Category,
+        repeatFrequency: String?
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             val currentUserId = userId
             if (currentUserId.isEmpty()) {
@@ -90,14 +96,29 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
                 return@launch // Do not add task if no user is authenticated
             }
 
+            // Adjust reminder based on repeat frequency
+            val adjustedReminder = when (repeatFrequency) {
+                "Daily" -> reminder?.plus(24 * 60 * 60 * 1000) // Add 1 day
+                "Weekly" -> reminder?.plus(7 * 24 * 60 * 60 * 1000) // Add 1 week
+                "Monthly" -> reminder?.let {
+                    Calendar.getInstance().apply {
+                        timeInMillis = it
+                        add(Calendar.MONTH, 1) // Add 1 month
+                    }.timeInMillis
+                }
+                else -> reminder // No change if no repeat frequency
+            }
+
+            // Create new Todo with repeat frequency
             val newTodo = Todo(
                 title = title,
                 createdAt = Date.from(Instant.now()),
-                reminderDate = reminder,
+                reminderDate = adjustedReminder,
                 isChecked = false,
                 priority = priority,
                 category = category,
-                userId = currentUserId
+                userId = currentUserId,
+                repeatFrequency = repeatFrequency // Save repeat frequency
             )
 
             // Add the task to the database
@@ -107,8 +128,8 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
             Log.d("TodoViewModel", "Task added for userId $currentUserId: $newTodo")
 
             // Schedule a notification if a reminder is set
-            if (reminder != null) {
-                scheduleNotification(title, reminder)
+            adjustedReminder?.let {
+                scheduleNotification(title, it)
             }
         }
     }
@@ -130,15 +151,14 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
         }
     }
     */
-    fun updateUser(newUsername: String, mail: String, userId: String, profileImageUrl: String) {
+    fun updateUsername(newUsername: String, mail: String, thisUserId: String, profileImageUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentUserId = userId
-            if (currentUserId.isEmpty()) {
+            if (thisUserId.isEmpty()) {
                 Log.e("TodoViewModel", "User is not authenticated")
                 return@launch // Do not add task if no user is authenticated
             } else {
                 val updatedUser = UserObject(
-                    userId = currentUserId,
+                    userId = thisUserId,
                     username = newUsername,
                     email = mail,
                     profileImageUrl = profileImageUrl
@@ -150,7 +170,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
             }
 
             // Log for debugging
-            Log.d("TodoViewModel", "User updated: $currentUserId, New username: $newUsername")
+            Log.d("TodoViewModel", "User updated: $thisUserId, New username: $newUsername")
         }
     }
 

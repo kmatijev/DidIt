@@ -1,8 +1,14 @@
 package com.example.didit
 
+import android.content.ContentResolver
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,15 +33,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.InputStream
 
 @Composable
 fun ProfilePage(
@@ -50,12 +63,13 @@ fun ProfilePage(
     val isDarkMode = viewModel.isDarkMode.collectAsState().value
 
     val user by viewModel.user.observeAsState()
+    val userId = authViewModel.userId
     // The username state that is bound to the TextField
     var username by remember { mutableStateOf("") }
     // Fetch user data when the screen is first loaded or userId changes
-    LaunchedEffect(authViewModel.userId) {
+    LaunchedEffect(userId) {
         // Fetch user info based on the userId
-        viewModel.fetchUser(authViewModel.userId)
+        viewModel.fetchUser(userId)
     }
     // Update the username state whenever the user data is updated
     LaunchedEffect(user) {
@@ -67,15 +81,21 @@ fun ProfilePage(
     // Observe the profile image URL from ViewModel
     val profileImageUrl by userViewModel.profileImageUrl.observeAsState()
 
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+
+
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            // Update profile image in database
-            userViewModel.updateProfileImage(authViewModel.userId, uri.toString())
+        scope.launch{
+            uri?.let{
+                userViewModel.updateProfileImage(userId, uriToBase64(context, uri) ?: "")
+            }
         }
     }
 
-    LaunchedEffect(authViewModel.userId) {
-        userViewModel.fetchProfileImageUrl(authViewModel.userId)
+    LaunchedEffect(userId) {
+        userViewModel.fetchProfileImageUrl(userId)
     }
 
     Scaffold(
@@ -112,11 +132,8 @@ fun ProfilePage(
                             tint = Color.White
                         )
                     } else {
-                        AsyncImage(
-                            model = profileImageUrl,
-                            contentDescription = "Profile Picture",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                        Base64Image(
+                            base64String = profileImageUrl ?: ""
                         )
                     }
                 }
@@ -152,7 +169,7 @@ fun ProfilePage(
                 // Save Changes Button
                 Button(
                     onClick = {
-                        viewModel.updateUser(username, user?.email ?: "", authViewModel.userId, userViewModel.profileImageUrl.value ?: "")
+                        viewModel.updateUsername(username, user?.email ?: "", userId, userViewModel.profileImageUrl.value ?: "")
                     },
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
@@ -199,4 +216,34 @@ fun ProfilePage(
 
         }
     )
+}
+
+suspend fun uriToBase64(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
+    try {
+        val contentResolver: ContentResolver = context.contentResolver
+        val inputStream: InputStream? = contentResolver.openInputStream(uri)
+        val bytes = inputStream?.readBytes() // Read the image as bytes
+        inputStream?.close()
+        if (bytes != null) {
+            Base64.encodeToString(bytes, Base64.DEFAULT) // Convert bytes to Base64
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+
+@Composable
+fun Base64Image(base64String: String) {
+    val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+    val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    bitmap?.let {
+        Image(
+            bitmap = it.asImageBitmap(),
+            contentDescription = null // Provide a proper content description if needed
+        )
+    }
 }

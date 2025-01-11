@@ -1,6 +1,12 @@
 package com.example.didit
 
 import android.app.Application
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,6 +18,9 @@ import kotlinx.coroutines.launch
 class UserViewModel(application: Application, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
 
     private val userDao = MainApplication.userDatabase.getUserDao()
+    private var isSaveInProgress = false
+
+    private val userId = authViewModel.userId
 
     // LiveData for profile image URL
     private val _profileImageUrl = MutableLiveData<String?>()
@@ -19,21 +28,34 @@ class UserViewModel(application: Application, private val authViewModel: AuthVie
 
     init {
         // Fetch the profile image URL when the ViewModel is initialized (app restart or on app start)
-        fetchProfileImageUrl(authViewModel.userId)  // Make sure userId is passed correctly here
+        fetchProfileImageUrl(userId)  // Make sure userId is passed correctly here
     }
 
     // Function to fetch the profile image URL from the database
-    fun fetchProfileImageUrl(userId: String) {
-        userDao.getProfileImageUrl(userId).observeForever {
-            _profileImageUrl.postValue(it)
+    fun fetchProfileImageUrl(currentId: String) {
+        viewModelScope.launch {
+            try {
+                val url = userDao.getProfileImageUrl(currentId)
+                _profileImageUrl.postValue((url ?: "").toString())
+            } catch (e: Exception) {
+                Log.e("TodoViewModel", "Failed to fetch profile image: ${e.message}")
+                _profileImageUrl.postValue("") // Fallback to empty string
+            }
         }
     }
 
-    // Function to update the profile image URL
-    fun updateProfileImage(userId: String, url: String) {
+    fun updateProfileImage(currentId: String, newProfileImageUrl: String) {
+        if (isSaveInProgress) return // Ignore subsequent calls
+
+        isSaveInProgress = true
         viewModelScope.launch {
-            userDao.updateProfileImage(userId, url)
-            fetchProfileImageUrl(userId)
+            try {
+                userDao.updateProfileImage(currentId, newProfileImageUrl)
+                _profileImageUrl.postValue(newProfileImageUrl)
+            } finally {
+                isSaveInProgress = false
+            }
         }
     }
+
 }

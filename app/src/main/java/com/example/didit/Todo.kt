@@ -37,5 +37,6 @@ data class Todo(
     var priority: Priority,
     val category: Category = Category.OTHERS,
     val isFinished: Boolean = false, // Add this new field to track finished tasks
-    val userId: String // Foreign key to link the task to a specific user
+    val userId: String, // Foreign key to link the task to a specific user
+    val repeatFrequency: String? = null // Add this field for repeat frequency
 )

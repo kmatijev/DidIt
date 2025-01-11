@@ -61,10 +61,11 @@ class AuthViewModel : ViewModel() {
 
     fun logout() {
         firebaseAuth.signOut()
-        _authState.value = AuthState.Idle
+        _authState.value = AuthState.LoggedOut
         _user.value = null
         userId = ""
         _isLoggedIn.value = false // Update the state
+
     }
     // Authenticate using FirebaseAuth (suspend function)
     private suspend fun authenticateUser(email: String, password: String): FirebaseUser? {
@@ -129,5 +130,6 @@ sealed class AuthState {
     data object Loading : AuthState()
     data object Success : AuthState()
     data object PasswordReset : AuthState()
+    data object LoggedOut : AuthState()
     data class Error(val message: String) : AuthState()
 }
