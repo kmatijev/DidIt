@@ -108,7 +108,10 @@ fun RegisterPage(
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     enabled = username.isNotBlank() && email.isNotBlank() && password.isNotBlank() && email == confirmEmail && password == confirmPassword,
-                    onClick = { viewModel.register(email, username, password) { _ -> {}
+                    onClick = { viewModel.register(email, username, password) { success ->
+                        if (success) {
+                            onRegisterSuccess() // Navigate to the login page after success
+                        }
                     }
                     },
                     modifier = Modifier.fillMaxWidth(0.8f)

@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.example.didit.CategoryStats
 import com.example.didit.Todo
 
 @Dao
@@ -38,4 +39,22 @@ interface TodoDao {
 
     @Query("Delete FROM todos where id = :id")
     suspend fun deleteTodo(id : Int)
+
+    // Get total tasks for a user
+    @Query("SELECT COUNT(*) FROM todos WHERE userId = :userId")
+    fun getTotalTasks(userId: String): LiveData<Int>
+
+    // Get completed tasks for a user
+    @Query("SELECT COUNT(*) FROM todos WHERE userId = :userId AND isFinished = TRUE")
+    fun getCompletedTasks(userId: String): LiveData<Int>
+
+    // Get task counts grouped by category
+    @Query("""
+        SELECT Category, COUNT(*) as count
+        FROM todos 
+        WHERE userId = :userId 
+        AND isFinished = 1
+        GROUP BY Category
+    """)
+    fun getCategoryStats(userId: String): LiveData<List<CategoryStats>>
 }

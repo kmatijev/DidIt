@@ -55,7 +55,7 @@ android {
 
 dependencies {
     // LeakCanary dependency
-    debugImplementation ("com.squareup.leakcanary:leakcanary-android:2.9.1")
+    // debugImplementation ("com.squareup.leakcanary:leakcanary-android:2.9.1")
 
     // Room Runtime
     implementation("androidx.room:room-runtime:2.6.0")
@@ -66,8 +66,18 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.auth)
 
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+
+
+    // Accompanist Glide integration for Jetpack Compose
+    // implementation (libs.accompanist.glide)
+
     // Room Compiler for KSP
     ksp("androidx.room:room-compiler:2.6.0")
+
+    //implementation("com.github.skydoves:landscapist-glide:1.5.2")
+
 
     // Optional - Testing Room
     testImplementation("androidx.room:room-testing:2.6.0")

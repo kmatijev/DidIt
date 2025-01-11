@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 fun FinishedTasksPage(
     viewModel: TodoViewModel,
     onTasksClick: () -> Unit, // This will be passed to handle the back navigation
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onStatisticsClick: () -> Unit
 ){
     val finishedTasks by viewModel.finishedTasks.observeAsState(emptyList())
 
@@ -30,6 +31,7 @@ fun FinishedTasksPage(
             AppTopBar(
                 title = "Finished Tasks",
                 onProfileClick = onProfileClick,
+                onStatisticsClick = onStatisticsClick,
                 onTasksClick = onTasksClick,
                 onFinishedTasksClick = {}
             )

@@ -14,6 +14,11 @@ enum class Category {
     JOB, PERSONAL, HOBBIES, OTHERS, ALL
 }
 
+data class CategoryStats(
+    val category: Category,
+    val count: Int
+)
+
 // Enum class for sorting options
 enum class SortOption {
     BY_PRIORITY,

@@ -16,4 +16,11 @@ interface UserDao {
 
     @Insert
     suspend fun addUser(user: UserObject)
+
+    @Query("SELECT profileImageUrl FROM users WHERE userId = :userId")
+    fun getProfileImageUrl(userId: String): LiveData<String?>
+
+    @Query("UPDATE users SET profileImageUrl = :url WHERE userId = :userId")
+    suspend fun updateProfileImage(userId: String, url: String)
+
 }

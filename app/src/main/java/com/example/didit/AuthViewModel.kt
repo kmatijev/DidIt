@@ -88,7 +88,7 @@ class AuthViewModel : ViewModel() {
 
                 val newUserObject = UserObject(newUser.user?.uid ?: "", username, email)
                 userDao.addUser(newUserObject)
-                _authState.value = AuthState.Success
+                //_authState.value = AuthState.Success
                 callback(true)
             } catch (e: Exception) {
                 val errorMessage = when {

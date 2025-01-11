@@ -64,7 +64,8 @@ import java.util.Locale
 fun TodoListPage(
     viewModel: TodoViewModel,
     onFinishedTasksClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onStatisticsClick: () -> Unit
 ) {
     val activeTasks by viewModel.activeTasks.observeAsState(emptyList())
 
@@ -112,6 +113,7 @@ fun TodoListPage(
             AppTopBar(
                 title = "Todo List",
                 onProfileClick = onProfileClick,
+                onStatisticsClick = onStatisticsClick,
                 onTasksClick = {},
                 onFinishedTasksClick = onFinishedTasksClick
             )

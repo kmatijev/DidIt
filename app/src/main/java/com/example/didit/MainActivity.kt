@@ -25,6 +25,8 @@ import com.google.firebase.FirebaseApp
 class MainActivity : ComponentActivity() {
 
     private lateinit var todoViewModel: TodoViewModel
+    private lateinit var statisticsViewModel: StatisticsViewModel
+    private lateinit var userViewModel : UserViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +38,9 @@ class MainActivity : ComponentActivity() {
         // Initialize the TodoViewModel with the AuthViewModel
         todoViewModel = TodoViewModel(application, authViewModel)
 
+        // Initialize the StatisticsViewModel with the AuthViewModel
+        statisticsViewModel = StatisticsViewModel(application, authViewModel)
+        userViewModel = UserViewModel(application, authViewModel)
 
         enableEdgeToEdge() // Your setup code for UI if necessary
 
@@ -52,7 +57,8 @@ class MainActivity : ComponentActivity() {
                     MainApp(
                         todoViewModel,
                         authViewModel,
-                        //profileViewModel,
+                        userViewModel,
+                        statisticsViewModel,
                         navController) // MainApp composable that manages navigation
                 }
             }
@@ -64,6 +70,8 @@ class MainActivity : ComponentActivity() {
 fun MainApp(
     todoViewModel: TodoViewModel,
     authViewModel: AuthViewModel,
+    userViewModel: UserViewModel,
+    statisticsViewModel: StatisticsViewModel,
     navController: NavHostController
 ) {
     // Observe the authentication state
@@ -141,6 +149,9 @@ fun MainApp(
                 },
                 onProfileClick = {
                     navController.navigate("profilePage")
+                },
+                onStatisticsClick = {
+                    navController.navigate("taskStatisticsPage")
                 }
             )
         }
@@ -154,6 +165,9 @@ fun MainApp(
                 },
                 onProfileClick = {
                     navController.navigate("profilePage")
+                },
+                onStatisticsClick = {
+                    navController.navigate("taskStatisticsPage")
                 }
             )
         }
@@ -163,19 +177,40 @@ fun MainApp(
             ProfilePage(
                 viewModel = todoViewModel,
                 authViewModel = authViewModel,
+                userViewModel = userViewModel,
                 onTasksClick = {
                     navController.navigate("todoListPage")
                 },
                 onFinishedTasksClick = {
                     navController.navigate("finishedTasksPage")
                 },
+                onStatisticsClick = {
+                    navController.navigate("taskStatisticsPage")
+                },
                 onLogout = {
+                    //todoViewModel.clearProfileImage()
                     // Logout and clear the back stack, going back to the login page
                     navController.navigate("loginPage") {
                         Log.d("MainApp", "Logging out and clearing back stack")
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
+                }
+            )
+        }
+
+        composable("taskStatisticsPage") {
+            TaskStatisticsPage(
+                statisticsViewModel = statisticsViewModel,
+                authViewModel = authViewModel,
+                onTasksClick = {
+                    navController.navigate("todoListPage")
+                },
+                onFinishedTasksClick = {
+                    navController.navigate("finishedTasksPage")
+                },
+                onProfileClick = {
+                    navController.navigate("profilePage")
                 }
             )
         }

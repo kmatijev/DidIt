@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -43,9 +44,6 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     private val _todoList = MediatorLiveData<List<Todo>>()
     var allTodos: LiveData<List<Todo>> = _todoList
 
-    private val _userData = MediatorLiveData<UserObject>()
-    var userData: LiveData<UserObject> = _userData
-
     val activeTasks: LiveData<List<Todo>> = allTodos.map { list ->
         list.filter { !it.isFinished }
     }.distinctUntilChanged()
@@ -55,7 +53,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
     }.distinctUntilChanged()
 
     init {
-        // Observe changes in the logged-in user
+
         _todoList.addSource(authViewModel.user.asLiveData()) { user ->
             user?.let {
                 fetchTodosForUser(it.uid)
@@ -114,6 +112,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
             }
         }
     }
+
     /*
     fun addUser(user: UserObject) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -131,7 +130,7 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
         }
     }
     */
-    fun updateUser(newUsername: String, mail: String, userId: String) {
+    fun updateUser(newUsername: String, mail: String, userId: String, profileImageUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val currentUserId = userId
             if (currentUserId.isEmpty()) {
@@ -141,8 +140,12 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
                 val updatedUser = UserObject(
                     userId = currentUserId,
                     username = newUsername,
-                    email = mail
+                    email = mail,
+                    profileImageUrl = profileImageUrl
                 )
+
+                Log.d("TodoViewModel", "Updating user: $updatedUser")
+
                 userDao.updateUser(updatedUser)
             }
 
@@ -192,4 +195,4 @@ class TodoViewModel(application: Application, private val authViewModel: AuthVie
             _isDarkMode.value = !_isDarkMode.value
             preferencesManager.saveThemePreference(_isDarkMode.value)
         }
-    }
+}
